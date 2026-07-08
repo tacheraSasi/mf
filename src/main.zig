@@ -39,10 +39,10 @@ pub fn main(init: std.process.Init) !void {
 
         const argv = [_][]const u8{ "git", "-C", repo_path, "remote", "get-url", "origin" };
         const result = try cmd.run(io, allocator, &argv);
-        defer allocator.free(result); // caller owns stdout (see cmd.zig)
+        // defer allocator.free(result); // caller owns stdout (see cmd.zig)
 
         const proj: manifest.Project = .{
-            .dir = entry.name,
+            .dir = try allocator.dupe(u8, entry.name),
             .git = result,
         };
 
@@ -69,4 +69,11 @@ pub fn main(init: std.process.Init) !void {
     });
 
     std.debug.print("Dooooneeeee",.{});
+
+    defer {
+        for (projects.items) |p| {
+            allocator.free(p.dir);
+            allocator.free(p.git);
+        }
+    }
 }

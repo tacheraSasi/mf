@@ -1,5 +1,3 @@
-const global = @import("../global.zig");
-
 pub const FILE_NAME = "mf.manifest.json";
 
 /// struct for the manifest json file structure
@@ -8,7 +6,7 @@ pub const Manifest = struct {
     projects: []Project,
 };
 
-pub const Project  = struct {
-    dir: global.String,
-    git: global.String,
+pub const Project = struct {
+    dir: []const u8,
+    git: []const u8,
 };
