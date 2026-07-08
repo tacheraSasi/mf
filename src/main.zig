@@ -15,11 +15,16 @@ pub fn main(init: std.process.Init) !void {
     const dir = try cwd.openDir(io, base, .{ .iterate = true });
     defer dir.close(io);
 
-    const manifestFile = try cwd.createFile(io, base, .{});
+    
+    const sub_path = try std.fs.path.join(allocator, &.{ base, manifest.FILE_NAME });
+    defer allocator.free(sub_path);
+
+    const manifestFile = try cwd.createFile(io, sub_path, .{});
     defer manifestFile.close(io);
 
     // start empty for now
     var projects: std.ArrayList(manifest.Project)  = .empty;
+    defer projects.deinit(allocator);
 
     // `iterate` yields only direct children (one level).
     // `walk` would recurse into every subdirectory.
@@ -48,7 +53,7 @@ pub fn main(init: std.process.Init) !void {
 
     const manifestData: manifest.Manifest = .{
         .version = 1,
-        .projects = projects,
+        .projects = projects.items,
     };
 
     var buf: std.Io.Writer.Allocating = .init(allocator);
@@ -60,7 +65,7 @@ pub fn main(init: std.process.Init) !void {
 
     try cwd.writeFile(io, .{
         .data = json_data,
-        .sub_path = base + manifestFile,
+        .sub_path = sub_path,
     });
 
     std.debug.print("Dooooneeeee",.{});
