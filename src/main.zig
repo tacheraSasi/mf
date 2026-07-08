@@ -3,6 +3,8 @@ const global = @import("global.zig");
 const cmd = @import("cmd.zig");
 const Io = std.Io;
 
+const manifest = @import("data/manifest.zig");
+
 const mf = @import("mf");
 
 pub fn main(init: std.process.Init) !void {
@@ -12,6 +14,12 @@ pub fn main(init: std.process.Init) !void {
     const cwd = std.Io.Dir.cwd();
     const dir = try cwd.openDir(io, base, .{ .iterate = true });
     defer dir.close(io);
+
+    const manifestFile = try cwd.createFile(io, base, .{});
+    defer manifestFile.close(io);
+
+    // start empty for now
+    var projects: std.ArrayList(manifest.Project)  = .empty;
 
     // `iterate` yields only direct children (one level).
     // `walk` would recurse into every subdirectory.
@@ -28,6 +36,32 @@ pub fn main(init: std.process.Init) !void {
         const result = try cmd.run(io, allocator, &argv);
         defer allocator.free(result); // caller owns stdout (see cmd.zig)
 
+        const proj: manifest.Project = .{
+            .dir = entry.name,
+            .git = result,
+        };
+
+        try projects.append(allocator, proj);
+
         std.debug.print("dir: {s}, git: {s}\n", .{ entry.name, result });
     }
+
+    const manifestData: manifest.Manifest = .{
+        .version = 1,
+        .projects = projects,
+    };
+
+    var buf: std.Io.Writer.Allocating = .init(allocator);
+    defer buf.deinit();
+    
+
+    try buf.writer.print("{f}",.{std.json.fmt(manifestData, .{})});
+    const json_data = buf.written();
+
+    try cwd.writeFile(io, .{
+        .data = json_data,
+        .sub_path = base + manifestFile,
+    });
+
+    std.debug.print("Dooooneeeee",.{});
 }
