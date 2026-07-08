@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "projects": [
+    {
+      "dir": "vintlang",
+      "git": "git@github.com:vintlang/vintlang.git"
+    },
+    {
+      "dir": "beamdrop",
+      "git": "git@github.com:tacheraSasi/beamdrop.git"
+    },
+    {
+      "dir": "mf",
+      "git": "git@github.com:tacheraSasi/mf.git"
+    }
+  ]
+}
