@@ -16,7 +16,7 @@ pub fn main(init: std.process.Init) !void {
     defer walker.deinit();
 
     while (try walker.next(io)) |entry| {
-        if (std.mem.eql(u8, @tagName(entry.kind), "file")) {
+        if (entry.kind == .file) {
             continue;
         }
         const argv = [_] []const u8{"git","remote","get-url","origin"};
