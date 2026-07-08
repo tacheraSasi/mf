@@ -1,4 +1,6 @@
 const global = @import("../global.zig");
+
+/// struct for the manifest json file structure
 pub const Manifest = struct {
     version: u32,
     projects: []Project,
