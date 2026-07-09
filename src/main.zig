@@ -42,7 +42,7 @@ pub fn main(init: std.process.Init) !void {
         // defer allocator.free(result); // caller owns stdout (see cmd.zig)
 
         const proj: manifest.Project = .{
-            .dir = try allocator.dupe(u8, entry.name),
+            .dir = try allocator.dupe(u8, entry.name), // here i dupe so that proj.dir owns its own memory nstead of aliasing the iterator's internal buffer.
             .git = result,
         };
 
