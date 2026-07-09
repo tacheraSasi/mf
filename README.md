@@ -20,7 +20,6 @@ This is what I want `mf` to achieve over time:
 - Make it easy to rebuild my entire development environment on a new machine.
 - Stay small, simple, and focused on workspace management.
 
----
 
 ## Learning Zig
 
