@@ -15,11 +15,18 @@ pub fn main(init: std.process.Init) !void {
     const dir = try cwd.openDir(io, base, .{ .iterate = true });
     defer dir.close(io);
 
-    
     const sub_path = try std.fs.path.join(allocator, &.{ base, manifest.FILE_NAME });
     defer allocator.free(sub_path);
 
-    const manifestFile = try cwd.createFile(io, sub_path, .{});
+    const manifestFile = cwd.createFile(io, sub_path, .{
+        .read = true,
+        .exclusive = true,
+    }) catch | err | switch (err) {
+      error.PathAlreadyExists => {
+          std.debug.print("mainifest file already exists skipping",.{});
+      },
+      else => return err,
+    };
     defer manifestFile.close(io);
 
     // start empty for now
