@@ -1,12 +1,9 @@
 const std = @import("std");
 const global = @import("global.zig");
 const cmd = @import("cmd.zig");
-const Io = std.Io;
-
 const manifest = @import("data/manifest.zig");
 
-const mf = @import("mf");
-
+const Io = std.Io;
 
 pub fn main(init: std.process.Init) !void {
     const allocator = init.gpa;
