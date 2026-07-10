@@ -11,6 +11,10 @@ const mf = @import("mf");
 pub fn main(init: std.process.Init) !void {
     const allocator = init.gpa;
     const io = init.io;
+    const args = try init.minimal.args.toSlice(allocator);
+    defer allocator.free(args);
+    std.debug.print("args: {any}",.{args});
+    
     const base = "/Users/mac/tach/zig";
     const cwd = std.Io.Dir.cwd();
     const dir = try cwd.openDir(io, base, .{ .iterate = true });
@@ -64,7 +68,7 @@ pub fn main(init: std.process.Init) !void {
     var buf: std.Io.Writer.Allocating = .init(allocator);
     defer buf.deinit();
 
-    try buf.writer.print("{f}", .{std.json.fmt(manifestData, .{})});
+    try buf.writer.print("{f}", .{std.json.fmt(manifestData, .{ .whitespace = .indent_2 })});
     const json_data = buf.written();
 
     try cwd.writeFile(io, .{
