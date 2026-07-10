@@ -14,6 +14,7 @@ pub fn run(io: std.Io, allocator: std.mem.Allocator, argv: []const []const u8) !
     };
 
     if (!ok) {
+        //TODO: i will figure out a btter way to handle error here later
         allocator.free(result.stdout);
         return error.ExitCodeFailure;
     }
