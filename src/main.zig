@@ -38,7 +38,12 @@ pub fn main(init: std.process.Init) !void {
         defer allocator.free(repo_path);
 
         const argv = [_][]const u8{ "git", "-C", repo_path, "remote", "get-url", "origin" };
-        const result = try cmd.run(io, allocator, &argv);
+        const result = cmd.run(io, allocator, &argv) catch | err | switch(err) {
+            error.ExitCodeFailure => {
+                continue; // we silently skip the dir wthout a repo
+            },
+            else => return err,  
+        };
         // defer allocator.free(result); // caller owns stdout (see cmd.zig)
 
         const proj: manifest.Project = .{
