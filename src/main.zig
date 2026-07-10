@@ -2,6 +2,7 @@ const std = @import("std");
 const global = @import("global.zig");
 const cmd = @import("cmd.zig");
 const manifest = @import("data/manifest.zig");
+const VERSION = 1;
 
 const Io = std.Io;
 
@@ -58,7 +59,7 @@ pub fn main(init: std.process.Init) !void {
     }
 
     const manifestData: manifest.Manifest = .{
-        .version = 1,
+        .version = VERSION,
         .projects = projects.items,
     };
 
