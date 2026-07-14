@@ -42,7 +42,7 @@ pub fn main(init: std.process.Init) !void {
         .rm => {
             try console.printLine("not implemented yet: rm {s}", .{positional_args[0]});
         },
-        .none => try console.printLine("usage: mf <scan|clone|status|rm|add> [options]", .{}),
+        .none => try console.printLine(help.HelpText(), .{}),
         else => try console.printLine("not implemented yet", .{}),
     }
 }
