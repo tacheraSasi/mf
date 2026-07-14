@@ -51,7 +51,7 @@ pub fn createFileIfNotExist(io: std.Io, cwd: std.Io.Dir, sub_path: []const u8) !
 
 /// scans a dir and creates the manifest file
 /// if manifest already existing we only add the new dirs that werent
-/// included in the manifest, we dont delete other dirs in the manifest
+/// included in the manifest, we dont delete other dirs/projects in the manifest
 /// even if they dont exist locally
 pub fn scan(io: std.Io, allocator: std.mem.Allocator, dir: std.Io.Dir) !void {
     const sub_path = try std.fs.path.join(allocator, &.{ BASE, manifest.FILE_NAME });
@@ -59,7 +59,10 @@ pub fn scan(io: std.Io, allocator: std.mem.Allocator, dir: std.Io.Dir) !void {
 
     const manifestFile = try createFileIfNotExist(io, dir, sub_path);
     defer manifestFile.close(io);
-    
+
+    var manifest_data: manifest.Manifest = .{};
+    manifest_data = manifest.parseManifestFile(io, allocator, dir);
+
     // start empty for now
     var projects: std.ArrayList(manifest.Project) = .empty;
     defer projects.deinit(allocator);
