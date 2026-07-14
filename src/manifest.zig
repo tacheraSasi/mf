@@ -60,11 +60,11 @@ pub fn parseManifestFile(io: std.Io, allocator: std.mem.Allocator, dir: std.Io.D
 }
 
 /// appends a new item to the manifest file
-/// seeds the existing data into the struct before 
+/// seeds the existing data into the struct before
 /// adding the new item
 /// it takes an option existing_manifest_data if null it parses the manifest file
 /// and gets the data
-pub fn appendToManifestFile(io: std.Io, allocator: std.mem.Allocator, dir: std.Io.Dir,proj: Project, existing_manifest_data: ?Manifest) !Manifest {
+pub fn appendToManifestFile(io: std.Io, allocator: std.mem.Allocator, dir: std.Io.Dir, proj: Project, existing_manifest_data: ?Manifest) !Manifest {
     const existing_data = existing_manifest_data orelse try parseManifestFile(io, allocator, dir);
     // `existing_manifest_data.projects` is a []Project allocated by
     // parseManifestFile. The .dir/.git strings inside are freed by the
@@ -105,6 +105,6 @@ pub fn appendToManifestFile(io: std.Io, allocator: std.mem.Allocator, dir: std.I
             allocator.free(p.git);
         }
     }
-    
+
     return manifestData;
 }
