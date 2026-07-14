@@ -60,19 +60,26 @@ pub fn scan(io: std.Io, allocator: std.mem.Allocator, dir: std.Io.Dir) !void {
     const manifestFile = try createFileIfNotExist(io, dir, sub_path);
     defer manifestFile.close(io);
 
-
     // start empty for now
     var projects: std.ArrayList(manifest.Project) = .empty;
     defer projects.deinit(allocator);
 
-    var existing_manifest_data: manifest.Manifest = undefined;
-    existing_manifest_data = try manifest.parseManifestFile(io, allocator, dir);
+    const existing_manifest_data = try manifest.parseManifestFile(io, allocator, dir);
+    // `existing_manifest_data.projects` is a []Project allocated by
+    // parseManifestFile. The .dir/.git strings inside are freed by the
+    // block below (via the ArrayList copies); this frees the struct array
+    // itself to avoid leaking it.
+    defer {
+        if (existing_manifest_data.projects.len > 0) {
+            allocator.free(existing_manifest_data.projects);
+        }
+    }
 
-    // seeeding the exinsting manifest file data
+    // seeding the existing manifest file data
     for (existing_manifest_data.projects) |existing| {
         try projects.append(allocator, existing);
     }
-    
+
     // `iterate` yields only direct children (one level).
     // `walk` would recurse into every subdirectory.
     var iter = dir.iterate();
@@ -80,7 +87,7 @@ pub fn scan(io: std.Io, allocator: std.mem.Allocator, dir: std.Io.Dir) !void {
         if (entry.kind != .directory) continue;
         var already_listed = false;
 
-        // i will move this to a hashmap but for now 
+        // i will move this to a hashmap but for now
         // this will work
         for (existing_manifest_data.projects) |existing| {
             if (std.mem.eql(u8, existing.dir, entry.name)) {
@@ -89,7 +96,6 @@ pub fn scan(io: std.Io, allocator: std.mem.Allocator, dir: std.Io.Dir) !void {
             }
         }
         if (already_listed) continue;
-
 
         // git must run inside the repo; use `-C <abspath>` since the process
         // cwd is not `base`.
@@ -140,5 +146,4 @@ pub fn scan(io: std.Io, allocator: std.mem.Allocator, dir: std.Io.Dir) !void {
             allocator.free(p.git);
         }
     }
-
 }

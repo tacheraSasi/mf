@@ -18,6 +18,18 @@ pub fn run(io: std.Io, allocator: std.mem.Allocator, argv: []const []const u8) !
         allocator.free(result.stdout);
         return error.ExitCodeFailure;
     }
-    // result.stdout is returned; caller owns it and must free it.
-    return result.stdout;
+
+    // Trim trailing whitespace (commands typically emit a trailing newline).
+    // trimRight returns a subslice, so we dupe to give the caller a
+    // standalone allocation it can free.
+    var end = result.stdout.len;
+    while (end > 0) : (end -= 1) {
+        const c = result.stdout[end - 1];
+        if (c != '\n' and c != '\r' and c != ' ' and c != '\t') break;
+    }
+    if (end == result.stdout.len) return result.stdout; // nothing to trim here
+
+    const trimmed = try allocator.dupe(u8, result.stdout[0..end]);
+    allocator.free(result.stdout);
+    return trimmed;
 }
