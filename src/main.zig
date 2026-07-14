@@ -1,5 +1,4 @@
 const std = @import("std");
-const global = @import("global.zig");
 const cmd = @import("cmd.zig");
 const manifest = @import("manifest.zig");
 const help = @import("help.zig");
