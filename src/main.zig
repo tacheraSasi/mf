@@ -2,28 +2,64 @@ const std = @import("std");
 const global = @import("global.zig");
 const cmd = @import("cmd.zig");
 const manifest = @import("data/manifest.zig");
+const help = @import("help.zig");
+const args_parser = @import("args.zig").ArgsParser;
 const VERSION = 1;
 
 const Io = std.Io;
+
+const BASE = "/Users/mac/tach/zig";
 
 pub fn main(init: std.process.Init) !void {
     const allocator = init.gpa;
     const io = init.io;
     const args = try init.minimal.args.toSlice(allocator);
     defer allocator.free(args);
-    std.debug.print("args: {any}",.{args});
-    
-    const base = "/Users/mac/tach/zig";
+
+    // const parser = args_parser.parse(args) catch {
+    //     std.debug.print("{s}",help.HelpText()); // for now i assume any error will only be invalid flag or subcommand
+    // };
+    const parser = try args_parser.parse(args);
+
+    const base = BASE;
     const cwd = std.Io.Dir.cwd();
     const dir = try cwd.openDir(io, base, .{ .iterate = true });
     defer dir.close(io);
 
-    const sub_path = try std.fs.path.join(allocator, &.{ base, manifest.FILE_NAME });
+    const cliFlags = parser.cli_flags;
+    switch (cliFlags.subcommand) {
+        .scan => try scan(io, allocator, dir),
+        .none => std.debug.print("usage: mf <scan|clone|status|rm|add> [options]\n", .{}),
+        else => std.debug.print("not implemented yet\n", .{}),
+    }
+}
+
+/// this function create a file only if it does not exist other wise it return the actual file itself
+pub fn createFileIfNotExist(io: std.Io, cwd: std.Io.Dir, sub_path: []const u8) !std.Io.File {
+    return cwd.createFile(io, sub_path, .{
+        .read = true,
+        .exclusive = true,
+    }) catch |err| switch (err) {
+        error.PathAlreadyExists => {
+            return cwd.openFile(io, sub_path, .{
+                .mode = .read_only,
+            });
+        },
+        else => return err,
+    };
+}
+
+/// scans a dir and creates the manifest file
+/// if manifest already existing we only add the new dirs that werent
+/// included in the manifest, we dont delete other dirs in the manifest
+/// even if they dont exist locally
+pub fn scan(io: std.Io, allocator: std.mem.Allocator, dir: std.Io.Dir) !void {
+    const sub_path = try std.fs.path.join(allocator, &.{ BASE, manifest.FILE_NAME });
     defer allocator.free(sub_path);
 
     const manifestFile = try createFileIfNotExist(io, dir, sub_path);
     defer manifestFile.close(io);
-
+    
     // start empty for now
     var projects: std.ArrayList(manifest.Project) = .empty;
     defer projects.deinit(allocator);
@@ -36,7 +72,7 @@ pub fn main(init: std.process.Init) !void {
 
         // git must run inside the repo; use `-C <abspath>` since the process
         // cwd is not `base`.
-        const repo_path = try std.fmt.allocPrint(allocator, "{s}/{s}", .{ base, entry.name });
+        const repo_path = try std.fmt.allocPrint(allocator, "{s}/{s}", .{ BASE, entry.name });
         defer allocator.free(repo_path);
 
         const argv = [_][]const u8{ "git", "-C", repo_path, "remote", "get-url", "origin" };
@@ -69,7 +105,7 @@ pub fn main(init: std.process.Init) !void {
     try buf.writer.print("{f}", .{std.json.fmt(manifestData, .{ .whitespace = .indent_2 })});
     const json_data = buf.written();
 
-    try cwd.writeFile(io, .{
+    try dir.writeFile(io, .{
         .data = json_data,
         .sub_path = sub_path,
     });
@@ -82,19 +118,4 @@ pub fn main(init: std.process.Init) !void {
             allocator.free(p.git);
         }
     }
-}
-
-/// this function create a file only if it does not exist other wise it return the actual file itself
-pub fn createFileIfNotExist(io: std.Io, cwd: std.Io.Dir, sub_path: []const u8) !std.Io.File {
-    return cwd.createFile(io, sub_path, .{
-        .read = true,
-        .exclusive = true,
-    }) catch |err| switch (err) {
-        error.PathAlreadyExists => {
-            return cwd.openFile(io, sub_path, .{
-                .mode = .read_only,
-            });
-        },
-        else => return err,
-    };
 }
