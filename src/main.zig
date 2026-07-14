@@ -12,7 +12,7 @@ pub fn main(init: std.process.Init) !void {
     const args = try init.minimal.args.toSlice(allocator);
     defer allocator.free(args);
     std.debug.print("args: {any}",.{args});
-    
+
     const base = "/Users/mac/tach/zig";
     const cwd = std.Io.Dir.cwd();
     const dir = try cwd.openDir(io, base, .{ .iterate = true });
@@ -24,6 +24,35 @@ pub fn main(init: std.process.Init) !void {
     const manifestFile = try createFileIfNotExist(io, dir, sub_path);
     defer manifestFile.close(io);
 
+
+}
+
+/// this function create a file only if it does not exist other wise it return the actual file itself
+pub fn createFileIfNotExist(io: std.Io, cwd: std.Io.Dir, sub_path: []const u8) !std.Io.File {
+    return cwd.createFile(io, sub_path, .{
+        .read = true,
+        .exclusive = true,
+    }) catch |err| switch (err) {
+        error.PathAlreadyExists => {
+            return cwd.openFile(io, sub_path, .{
+                .mode = .read_only,
+            });
+        },
+        else => return err,
+    };
+}
+
+/// scans a dir and creates the manifest file
+/// if manifest already existing we only add the new dirs that werent
+/// included in the manifest, we dont delete other dirs in the manifest
+/// even if they dont exist locally
+pub fn scan(io: std.Io, allocator: std.mem.Allocator cwd: std.Io.Dir) !void {
+    const sub_path = try std.fs.path.join(allocator, &.{ base, manifest.FILE_NAME });
+    defer allocator.free(sub_path);
+
+    const manifestFile = try createFileIfNotExist(io, dir, sub_path);
+    defer manifestFile.close(io);
+    
     // start empty for now
     var projects: std.ArrayList(manifest.Project) = .empty;
     defer projects.deinit(allocator);
@@ -82,19 +111,4 @@ pub fn main(init: std.process.Init) !void {
             allocator.free(p.git);
         }
     }
-}
-
-/// this function create a file only if it does not exist other wise it return the actual file itself
-pub fn createFileIfNotExist(io: std.Io, cwd: std.Io.Dir, sub_path: []const u8) !std.Io.File {
-    return cwd.createFile(io, sub_path, .{
-        .read = true,
-        .exclusive = true,
-    }) catch |err| switch (err) {
-        error.PathAlreadyExists => {
-            return cwd.openFile(io, sub_path, .{
-                .mode = .read_only,
-            });
-        },
-        else => return err,
-    };
 }
