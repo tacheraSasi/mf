@@ -15,7 +15,9 @@ pub fn main(init: std.process.Init) !void {
     const args = try init.minimal.args.toSlice(allocator);
     defer allocator.free(args);
 
-    const parser = try args_parser.parse(args);
+    const parser = args_parser.parse(args) catch |err| switch (err) {
+        error.UnknownSubcommand => std.debug.print("unkw")
+    };
     parser.Test();
 
     const base = BASE;
