@@ -109,12 +109,4 @@ pub fn scan(io: Io, allocator: std.mem.Allocator, dir: std.Io.Dir) !void {
     }
 
     std.debug.print("Dooooneeeeeeeeeeeeeeee\n", .{});
-
-    // defer {
-    //     for (projects.items) |p| {
-    //         // std.debug.print("freeing dir: {s}\n", .{p.dir});
-    //         allocator.free(p.dir);
-    //         allocator.free(p.git);
-    //     }
-    // }
 }

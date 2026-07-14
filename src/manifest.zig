@@ -98,6 +98,13 @@ pub fn appendToManifestFile(io: std.Io, allocator: std.mem.Allocator, dir: std.I
         .data = json_data,
         .sub_path = FILE_NAME,
     });
-
+    defer {
+        for (projects.items) |p| {
+            // std.debug.print("freeing dir: {s}\n", .{p.dir});
+            allocator.free(p.dir);
+            allocator.free(p.git);
+        }
+    }
+    
     return manifestData;
 }
