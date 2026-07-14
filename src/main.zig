@@ -1,4 +1,5 @@
 const std = @import("std");
+const stdio = @import("stdio");
 const cmd = @import("cmd.zig");
 const manifest = @import("manifest.zig");
 const help = @import("help.zig");
@@ -10,10 +11,15 @@ const VERSION = 1;
 
 const Io = std.Io;
 
-
 pub fn main(init: std.process.Init) !void {
     const allocator = init.gpa;
     const io = init.io;
+    var write_buf: [4096]u8 = undefined;
+    var read_buf: [4096]u8 = undefined;
+
+    var console: stdio.Console = undefined;
+    console.init(io, &write_buf, &read_buf);
+
     const args = try init.minimal.args.toSlice(allocator);
     defer allocator.free(args);
 
@@ -29,15 +35,14 @@ pub fn main(init: std.process.Init) !void {
 
     const cliFlags = parser.cli_flags;
     const positional_args = parser.positional_args;
-    
+
     switch (cliFlags.subcommand) {
         .scan => try core.Scan(io, allocator, dir),
-        .add => try core.Add(io, allocator, dir,positional_args[0]),
+        .add => try core.Add(io, allocator, dir, positional_args[0]),
         .rm => {
-          std.debug.print("not implemented yet: rm {s}\n", .{positional_args[0]});  
+            try console.printLine("not implemented yet: rm {s}", .{positional_args[0]});
         },
-        .none => std.debug.print("usage: mf <scan|clone|status|rm|add> [options]\n", .{}),
-        else => std.debug.print("not implemented yet\n", .{}),
+        .none => try console.printLine("usage: mf <scan|clone|status|rm|add> [options]", .{}),
+        else => try console.printLine("not implemented yet", .{}),
     }
 }
-
