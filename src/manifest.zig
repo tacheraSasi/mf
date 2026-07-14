@@ -23,7 +23,7 @@ pub fn parseManifestFile(io: std.Io, allocator: std.mem.Allocator, dir: std.Io.D
     const json_data = try dir.readFileAlloc(io, FILE_NAME, allocator, .unlimited);
     defer allocator.free(json_data);
 
-    // Empty (or not-yet-written) manifest → no projects. Return a static
+    // Empty (or not-yet-written) manifest -> no projects. Return a static
     // empty slice; the caller must NOT free it (see conditional free in scan).
     if (json_data.len == 0) {
         return .{ .version = 0, .projects = &.{} };
