@@ -11,7 +11,7 @@ pub const ArgsParser = struct {
     cli_flags: CliFlags,
 
     /// positional args after the subcommand
-    positional_args: []const []const u8, 
+    positional_args: []const []const u8,
 
     const Self = @This();
 
@@ -28,8 +28,7 @@ pub const ArgsParser = struct {
         // First non-flag arg is the subcommand. `stringToEnum` does the
         // string -> enum lookup at runtime; returns null on no match.
         if (args[i].len > 0 and args[i][0] != '-') {
-            flags.subcommand = std.meta.stringToEnum(Subcommand, args[i])
-                orelse return error.UnknownSubcommand;
+            flags.subcommand = std.meta.stringToEnum(Subcommand, args[i]) orelse return error.UnknownSubcommand;
             i += 1;
         }
 
@@ -69,6 +68,9 @@ pub const ArgsParser = struct {
     pub fn Test(self: *const Self) void {
         std.debug.print("subcommand: {s}\n", .{@tagName(self.cli_flags.subcommand)});
         std.debug.print("verbose: {}\n", .{self.cli_flags.verbose});
-        std.debug.print("positionals: {s}\n", .{self.positional_args});
+        for (self.positional_args) |arg| {
+            std.debug.print(" {s}", .{arg});
+        }
+        std.debug.print("\n", .{});
     }
 };
