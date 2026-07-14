@@ -2,6 +2,7 @@ const std = @import("std");
 const global = @import("global.zig");
 const cmd = @import("cmd.zig");
 const manifest = @import("data/manifest.zig");
+const args_parser = @import("args.zig").ArgsParser;
 const VERSION = 1;
 
 const Io = std.Io;
@@ -13,14 +14,13 @@ pub fn main(init: std.process.Init) !void {
     const io = init.io;
     const args = try init.minimal.args.toSlice(allocator);
     defer allocator.free(args);
-    std.debug.print("args: {any}",.{args});
+
+    try args_parser.parse(args);
 
     const base = BASE;
     const cwd = std.Io.Dir.cwd();
     const dir = try cwd.openDir(io, base, .{ .iterate = true });
     defer dir.close(io);
-    
-
 }
 
 /// this function create a file only if it does not exist other wise it return the actual file itself
