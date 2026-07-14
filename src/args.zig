@@ -1,5 +1,12 @@
 const std = @import("std");
 
+pub const Subcommand = enum { none, scan, clone, status, rm, add };
+
+pub const CliFlags = struct {
+    subcommand: Subcommand = .none,
+    verbose: bool = false,
+};
+
 pub const ArgsParser = struct {
     args: []const []const u8,
 
@@ -15,9 +22,4 @@ pub const ArgsParser = struct {
             std.debug.print("{s}\n",.{arg});
         }
     }
-};
-
-/// CliFlags
-pub const CliFlags = struct {
-    
 };
