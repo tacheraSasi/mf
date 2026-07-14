@@ -63,12 +63,12 @@ pub const ArgsParser = struct {
             if (!found) return error.UnknownFlag;
         }
 
-        return .{ .cli_flags = flags, .args = positional };
+        return .{ .cli_flags = flags, .positional_args = positional };
     }
 
     pub fn Test(self: *const Self) void {
         std.debug.print("subcommand: {s}\n", .{@tagName(self.cli_flags.subcommand)});
         std.debug.print("verbose: {}\n", .{self.cli_flags.verbose});
-        std.debug.print("positionals: {s}\n", .{self.args});
+        std.debug.print("positionals: {s}\n", .{self.positional_args});
     }
 };
