@@ -17,7 +17,7 @@ pub fn Add(io: std.Io, allocator: std.mem.Allocator, dir: std.Io.Dir, git_url: [
 
 
     // after adding i just rescan the entire dir for now
-    scan.Scan(io, allocator, dir);
+   try  scan.Scan(io, allocator, dir);
 
     
 }

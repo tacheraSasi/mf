@@ -32,7 +32,7 @@ pub fn main(init: std.process.Init) !void {
     const positional_args = parser.positional_args;
     
     switch (cliFlags.subcommand) {
-        .scan => try scan(io, allocator, dir),
+        .scan => try scan.Scan(io, allocator, dir),
         .add => try add.Add(io, allocator, dir,positional_args[0]),
         .none => std.debug.print("usage: mf <scan|clone|status|rm|add> [options]\n", .{}),
         else => std.debug.print("not implemented yet\n", .{}),

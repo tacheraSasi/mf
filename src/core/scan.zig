@@ -1,6 +1,7 @@
 const std = @import("std");
-const manifest = @import("manifest.zig");
-const constants = @import("constants.zig");
+const manifest = @import("../manifest.zig");
+const cmd = @import("../cmd.zig");
+const constants = @import("../constants.zig");
 const utils = @import("../utils.zig");
 
 
@@ -54,7 +55,7 @@ pub fn Scan(io: std.Io, allocator: std.mem.Allocator, dir: std.Io.Dir) !void {
 
         // git must run inside the repo; use `-C <abspath>` since the process
         // cwd is not `base`.
-        const repo_path = try std.fmt.allocPrint(allocator, "{s}/{s}", .{ BASE, entry.name });
+        const repo_path = try std.fmt.allocPrint(allocator, "{s}/{s}", .{ constants.BASE, entry.name });
         defer allocator.free(repo_path);
 
         const argv = [_][]const u8{ "git", "-C", repo_path, "remote", "get-url", "origin" };
@@ -77,7 +78,7 @@ pub fn Scan(io: std.Io, allocator: std.mem.Allocator, dir: std.Io.Dir) !void {
     }
 
     const manifestData: manifest.Manifest = .{
-        .version = VERSION,
+        .version = constants.VERSION,
         .projects = projects.items,
     };
 
