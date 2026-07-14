@@ -2,9 +2,8 @@ const std = @import("std");
 const cmd = @import("cmd.zig");
 const manifest = @import("manifest.zig");
 const help = @import("help.zig");
-const add = @import("core/add.zig");
-const scan = @import("core/scan.zig");
 const constants = @import("constants.zig");
+const core = @import("core/core.zig");
 
 const args_parser = @import("args.zig").ArgsParser;
 const VERSION = 1;
@@ -32,8 +31,8 @@ pub fn main(init: std.process.Init) !void {
     const positional_args = parser.positional_args;
     
     switch (cliFlags.subcommand) {
-        .scan => try scan.Scan(io, allocator, dir),
-        .add => try add.Add(io, allocator, dir,positional_args[0]),
+        .scan => try core.Scan(io, allocator, dir),
+        .add => try core.Add(io, allocator, dir,positional_args[0]),
         .rm => {
           std.debug.print("not implemented yet: rm {s}\n", .{positional_args[0]});  
         },
