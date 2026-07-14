@@ -38,7 +38,7 @@ pub fn main(init: std.process.Init) !void {
     switch (cliFlags.subcommand) {
         .scan => try core.Scan(io, allocator, dir),
         .add => try core.Add(io, allocator, dir, positional_args[0]),
-        .status => try core.Add(io, allocator, dir, positional_args[0]),
+        .status => try core.Status(io, allocator, dir),
         .rm => {
             try console.printLine("not implemented yet: rm {s}", .{positional_args[0]});
         },

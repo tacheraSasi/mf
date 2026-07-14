@@ -5,14 +5,32 @@ const cmd = @import("../cmd.zig");
 const constants = @import("../constants.zig");
 const utils = @import("../utils.zig");
 
-pub fn status(io: std.Io, allocator: std.mem.Allocator, dir: std.Io.Dir) !void {
+pub fn Status(io: std.Io, allocator: std.mem.Allocator, dir: std.Io.Dir) !void {
     var write_buf: [4096]u8 = undefined;
     var read_buf: [4096]u8 = undefined;
 
     var console: stdio.Console = undefined;
     console.init(io, &write_buf, &read_buf);
     const existing_manifest_data = try manifest.parseManifestFile(io, allocator, dir);
-    console.printLine("{s}",.{statusString(allocator, existing_manifest_data)});
+    // `parseManifestFile` dupes every .dir/.git + the []Project array into
+    // `allocator`; we own all of it and must free it before returning.
+    // Order matters: free the strings first (looping the array), then the
+    // array itself. The empty-manifest case returns a static `&.{}` that
+    // must NOT be freed, hence the length check.
+    defer {
+        for (existing_manifest_data.projects) |p| {
+            allocator.free(p.dir);
+            allocator.free(p.git);
+        }
+        if (existing_manifest_data.projects.len > 0) {
+            allocator.free(existing_manifest_data.projects);
+        }
+    }
+
+    const s = try statusString(allocator, existing_manifest_data.projects);
+    defer allocator.free(s);
+
+    try console.printLine("{s}", .{s});
 }
 
 fn statusString(allocator: std.mem.Allocator, projects: []manifest.Project) ![]u8 {
