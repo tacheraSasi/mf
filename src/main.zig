@@ -15,7 +15,8 @@ pub fn main(init: std.process.Init) !void {
     const args = try init.minimal.args.toSlice(allocator);
     defer allocator.free(args);
 
-    try args_parser.parse(args);
+    const parser = try args_parser.parse(args);
+    parser.Test();
 
     const base = BASE;
     const cwd = std.Io.Dir.cwd();
