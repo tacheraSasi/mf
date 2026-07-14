@@ -60,8 +60,8 @@ pub fn scan(io: std.Io, allocator: std.mem.Allocator, dir: std.Io.Dir) !void {
     const manifestFile = try createFileIfNotExist(io, dir, sub_path);
     defer manifestFile.close(io);
 
-    var manifest_data: manifest.Manifest = .{};
-    manifest_data = manifest.parseManifestFile(io, allocator, dir);
+    var manifest_data: manifest.Manifest = undefined;
+    manifest_data = try manifest.parseManifestFile(io, allocator, dir);
 
     // start empty for now
     var projects: std.ArrayList(manifest.Project) = .empty;

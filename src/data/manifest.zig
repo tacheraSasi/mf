@@ -16,4 +16,10 @@ pub const Project = struct {
 /// parses an existing manifest file and returns the `Manifest` struct
 pub fn parseManifestFile(io:std.Io, allocator: std.mem.Allocator, dir: std.Io.Dir) !Manifest {
     const json_data = try dir.readFileAlloc(io, FILE_NAME, allocator, .unlimited);
+    defer allocator.free(json_data);
+
+    const parsed_data = try std.json.parseFromSlice(Manifest, allocator, json_data, .{});
+    defer parsed_data.deinit();
+
+    return parsed_data.value;
 }
