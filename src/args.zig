@@ -16,3 +16,8 @@ pub const ArgsParser = struct {
         }
     }
 };
+
+/// CliFlags
+pub const CliFlags = struct {
+    
+};
