@@ -34,7 +34,7 @@ pub fn main(init: std.process.Init) !void {
 }
 
 /// this function create a file only if it does not exist other wise it return the actual file itself
-pub fn createFileIfNotExist(io: std.Io, cwd: std.Io.Dir, sub_path: []const u8) !std.Io.File {
+pub fn createFileIfNotExist(io: Io, cwd: Io.Dir, sub_path: []const u8) !Io.File {
     return cwd.createFile(io, sub_path, .{
         .read = true,
         .exclusive = true,
@@ -52,7 +52,7 @@ pub fn createFileIfNotExist(io: std.Io, cwd: std.Io.Dir, sub_path: []const u8) !
 /// if manifest already existing we only add the new dirs that werent
 /// included in the manifest, we dont delete other dirs/projects in the manifest
 /// even if they dont exist locally
-pub fn scan(io: std.Io, allocator: std.mem.Allocator, dir: std.Io.Dir) !void {
+pub fn scan(io: Io, allocator: std.mem.Allocator, dir: std.Io.Dir) !void {
     const sub_path = try std.fs.path.join(allocator, &.{ BASE, manifest.FILE_NAME });
     defer allocator.free(sub_path);
 
