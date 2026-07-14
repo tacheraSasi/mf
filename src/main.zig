@@ -2,6 +2,7 @@ const std = @import("std");
 const global = @import("global.zig");
 const cmd = @import("cmd.zig");
 const manifest = @import("data/manifest.zig");
+const help = @import("help.zig");
 const args_parser = @import("args.zig").ArgsParser;
 const VERSION = 1;
 
@@ -15,15 +16,22 @@ pub fn main(init: std.process.Init) !void {
     const args = try init.minimal.args.toSlice(allocator);
     defer allocator.free(args);
 
-    const parser = args_parser.parse(args) catch |err| switch (err) {
-        error.UnknownSubcommand => std.debug.print("unkw")
-    };
-    parser.Test();
+    // const parser = args_parser.parse(args) catch {
+    //     std.debug.print("{s}",help.HelpText()); // for now i assume any error will only be invalid flag or subcommand
+    // };
+    const parser = try args_parser.parse(args);
 
     const base = BASE;
     const cwd = std.Io.Dir.cwd();
     const dir = try cwd.openDir(io, base, .{ .iterate = true });
     defer dir.close(io);
+
+    const cliFlags = parser.cli_flags;
+    switch (cliFlags.subcommand) {
+        .scan => try scan(io, allocator, dir),
+        .none => std.debug.print("usage: mf <scan|clone|status|rm|add> [options]\n", .{}),
+        else => std.debug.print("not implemented yet\n", .{}),
+    }
 }
 
 /// this function create a file only if it does not exist other wise it return the actual file itself
