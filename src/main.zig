@@ -34,6 +34,9 @@ pub fn main(init: std.process.Init) !void {
     switch (cliFlags.subcommand) {
         .scan => try scan.Scan(io, allocator, dir),
         .add => try add.Add(io, allocator, dir,positional_args[0]),
+        .rm => {
+          std.debug.print("not implemented yet: rm {s}\n", .{positional_args[0]});  
+        },
         .none => std.debug.print("usage: mf <scan|clone|status|rm|add> [options]\n", .{}),
         else => std.debug.print("not implemented yet\n", .{}),
     }
