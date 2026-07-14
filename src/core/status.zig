@@ -17,6 +17,7 @@ pub fn Status(io: std.Io, allocator: std.mem.Allocator, dir: std.Io.Dir) !void {
     // Order matters: free the strings first (looping the array), then the
     // array itself. The empty-manifest case returns a static `&.{}` that
     // must NOT be freed, hence the length check.
+    // thiss  took me a long time to fix haha
     defer {
         for (existing_manifest_data.projects) |p| {
             allocator.free(p.dir);
