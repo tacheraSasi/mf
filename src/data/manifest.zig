@@ -6,6 +6,7 @@ pub const Manifest = struct {
     projects: []Project,
 };
 
+/// struct for the project structure
 pub const Project = struct {
     dir: []const u8,
     git: []const u8,
