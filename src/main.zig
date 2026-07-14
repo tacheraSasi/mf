@@ -61,7 +61,7 @@ pub fn scan(io: std.Io, allocator: std.mem.Allocator, dir: std.Io.Dir) !void {
 
         // git must run inside the repo; use `-C <abspath>` since the process
         // cwd is not `base`.
-        const repo_path = try std.fmt.allocPrint(allocator, "{s}/{s}", .{ base, entry.name });
+        const repo_path = try std.fmt.allocPrint(allocator, "{s}/{s}", .{ BASE, entry.name });
         defer allocator.free(repo_path);
 
         const argv = [_][]const u8{ "git", "-C", repo_path, "remote", "get-url", "origin" };
@@ -94,7 +94,7 @@ pub fn scan(io: std.Io, allocator: std.mem.Allocator, dir: std.Io.Dir) !void {
     try buf.writer.print("{f}", .{std.json.fmt(manifestData, .{ .whitespace = .indent_2 })});
     const json_data = buf.written();
 
-    try cwd.writeFile(io, .{
+    try dir.writeFile(io, .{
         .data = json_data,
         .sub_path = sub_path,
     });
