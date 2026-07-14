@@ -60,15 +60,44 @@ pub fn parseManifestFile(io: std.Io, allocator: std.mem.Allocator, dir: std.Io.D
 }
 
 /// appends a new item to the manifest file
-pub fn appendManifest(io: std.Io, allocator: std.mem.Allocator, dir: std.Io.Dir) !Manifest {
-    const existing_manifest_data = try parseManifestFile(io, allocator, dir);
+/// seeds the existing data into the struct before 
+/// adding the new item
+/// it takes an option existing_manifest_data if null it parses the manifest file
+/// and gets the data
+pub fn appendToManifestFile(io: std.Io, allocator: std.mem.Allocator, dir: std.Io.Dir,proj: Project, existing_manifest_data: ?Manifest) !Manifest {
+    const existing_data = existing_manifest_data orelse try parseManifestFile(io, allocator, dir);
     // `existing_manifest_data.projects` is a []Project allocated by
     // parseManifestFile. The .dir/.git strings inside are freed by the
     // block below (via the ArrayList copies); this frees the struct array
     // itself to avoid leaking it.
     defer {
-        if (existing_manifest_data.projects.len > 0) {
-            allocator.free(existing_manifest_data.projects);
+        if (existing_data.projects.len > 0) {
+            allocator.free(existing_data.projects);
         }
     }
+    var projects: std.ArrayList(Project) = .empty;
+    defer projects.deinit(allocator);
+
+    // seeding the existing manifest file data
+    for (existing_data.projects) |existing| {
+        try projects.append(allocator, existing);
+    }
+    try projects.append(allocator, proj);
+    const manifestData: Manifest = .{
+        .version = existing_data.version,
+        .projects = projects.items,
+    };
+
+    var buf: std.Io.Writer.Allocating = .init(allocator);
+    defer buf.deinit();
+
+    try buf.writer.print("{f}", .{std.json.fmt(manifestData, .{ .whitespace = .indent_2 })});
+    const json_data = buf.written();
+
+    try dir.writeFile(io, .{
+        .data = json_data,
+        .sub_path = FILE_NAME,
+    });
+
+    return manifestData;
 }

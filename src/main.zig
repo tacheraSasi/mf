@@ -59,10 +59,6 @@ pub fn scan(io: Io, allocator: std.mem.Allocator, dir: std.Io.Dir) !void {
     const manifestFile = try createFileIfNotExist(io, dir, sub_path);
     defer manifestFile.close(io);
 
-    // start empty for now
-    var projects: std.ArrayList(manifest.Project) = .empty;
-    defer projects.deinit(allocator);
-
     const existing_manifest_data = try manifest.parseManifestFile(io, allocator, dir);
     // `existing_manifest_data.projects` is a []Project allocated by
     // parseManifestFile. The .dir/.git strings inside are freed by the
@@ -73,12 +69,6 @@ pub fn scan(io: Io, allocator: std.mem.Allocator, dir: std.Io.Dir) !void {
             allocator.free(existing_manifest_data.projects);
         }
     }
-
-    // seeding the existing manifest file data
-    for (existing_manifest_data.projects) |existing| {
-        try projects.append(allocator, existing);
-    }
-
     // `iterate` yields only direct children (one level).
     // `walk` would recurse into every subdirectory.
     var iter = dir.iterate();
@@ -114,35 +104,17 @@ pub fn scan(io: Io, allocator: std.mem.Allocator, dir: std.Io.Dir) !void {
             .dir = try allocator.dupe(u8, entry.name), // here i dupe so that proj.dir owns its own memory nstead of aliasing the iterator's internal buffer.
             .git = result,
         };
-
-        try projects.append(allocator, proj);
-
         std.debug.print("dir: {s}, git: {s}\n", .{ entry.name, result });
+        _ = try manifest.appendToManifestFile(io,allocator,dir,proj,existing_manifest_data);
     }
-
-    const manifestData: manifest.Manifest = .{
-        .version = VERSION,
-        .projects = projects.items,
-    };
-
-    var buf: std.Io.Writer.Allocating = .init(allocator);
-    defer buf.deinit();
-
-    try buf.writer.print("{f}", .{std.json.fmt(manifestData, .{ .whitespace = .indent_2 })});
-    const json_data = buf.written();
-
-    try dir.writeFile(io, .{
-        .data = json_data,
-        .sub_path = sub_path,
-    });
 
     std.debug.print("Dooooneeeeeeeeeeeeeeee\n", .{});
 
-    defer {
-        for (projects.items) |p| {
-            // std.debug.print("freeing dir: {s}\n", .{p.dir});
-            allocator.free(p.dir);
-            allocator.free(p.git);
-        }
-    }
+    // defer {
+    //     for (projects.items) |p| {
+    //         // std.debug.print("freeing dir: {s}\n", .{p.dir});
+    //         allocator.free(p.dir);
+    //         allocator.free(p.git);
+    //     }
+    // }
 }
