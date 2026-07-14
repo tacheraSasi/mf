@@ -2,6 +2,7 @@ const std = @import("std");
 const cmd = @import("cmd.zig");
 const manifest = @import("manifest.zig");
 const help = @import("help.zig");
+const add = @import("core/add.zig");
 const args_parser = @import("args.zig").ArgsParser;
 const VERSION = 1;
 
@@ -26,8 +27,11 @@ pub fn main(init: std.process.Init) !void {
     defer dir.close(io);
 
     const cliFlags = parser.cli_flags;
+    const positional_args = parser.positional_args;
+    
     switch (cliFlags.subcommand) {
         .scan => try scan(io, allocator, dir),
+        .add => try add.Add(io, allocator, dir,positional_args[0]),
         .none => std.debug.print("usage: mf <scan|clone|status|rm|add> [options]\n", .{}),
         else => std.debug.print("not implemented yet\n", .{}),
     }
