@@ -60,18 +60,36 @@ pub fn scan(io: std.Io, allocator: std.mem.Allocator, dir: std.Io.Dir) !void {
     const manifestFile = try createFileIfNotExist(io, dir, sub_path);
     defer manifestFile.close(io);
 
-    var manifest_data: manifest.Manifest = undefined;
-    manifest_data = try manifest.parseManifestFile(io, allocator, dir);
 
     // start empty for now
     var projects: std.ArrayList(manifest.Project) = .empty;
     defer projects.deinit(allocator);
 
+    var existing_manifest_data: manifest.Manifest = undefined;
+    existing_manifest_data = try manifest.parseManifestFile(io, allocator, dir);
+
+    // seeeding the exinsting manifest file data
+    for (existing_manifest_data.projects) |existing| {
+        try projects.append(allocator, existing);
+    }
+    
     // `iterate` yields only direct children (one level).
     // `walk` would recurse into every subdirectory.
     var iter = dir.iterate();
     while (try iter.next(io)) |entry| {
         if (entry.kind != .directory) continue;
+        var already_listed = false;
+
+        // i will move this to a hashmap but for now 
+        // this will work
+        for (existing_manifest_data.projects) |existing| {
+            if (std.mem.eql(u8, existing.dir, entry.name)) {
+                already_listed = true;
+                break;
+            }
+        }
+        if (already_listed) continue;
+
 
         // git must run inside the repo; use `-C <abspath>` since the process
         // cwd is not `base`.
@@ -117,8 +135,10 @@ pub fn scan(io: std.Io, allocator: std.mem.Allocator, dir: std.Io.Dir) !void {
 
     defer {
         for (projects.items) |p| {
+            std.debug.print("freeing dir: {s}\n", .{p.dir});
             allocator.free(p.dir);
             allocator.free(p.git);
         }
     }
+
 }
