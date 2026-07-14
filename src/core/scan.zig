@@ -1,17 +1,18 @@
 const std = @import("std");
 const manifest = @import("manifest.zig");
 const constants = @import("constants.zig");
+const utils = @import("../utils.zig");
 
 
 /// scans a dir and creates the manifest file
-/// if manifest already existing we only add the new dirs that werent
-/// included in the manifest, we dont delete other dirs/projects in the manifest
+/// if manifest already existing it only add the new dirs that werent
+/// included in the manifest, it wont delete other dirs/projects in the manifest
 /// even if they dont exist locally
 pub fn Scan(io: std.Io, allocator: std.mem.Allocator, dir: std.Io.Dir) !void {
     const sub_path = try std.fs.path.join(allocator, &.{ constants.BASE, manifest.FILE_NAME });
     defer allocator.free(sub_path);
 
-    const manifestFile = try createFileIfNotExist(io, dir, sub_path);
+    const manifestFile = try utils.createFileIfNotExist(io, dir, sub_path);
     defer manifestFile.close(io);
 
     // start empty for now
