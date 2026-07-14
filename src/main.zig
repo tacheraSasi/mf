@@ -6,6 +6,8 @@ const VERSION = 1;
 
 const Io = std.Io;
 
+const BASE = "/Users/mac/tach/zig";
+
 pub fn main(init: std.process.Init) !void {
     const allocator = init.gpa;
     const io = init.io;
@@ -13,17 +15,11 @@ pub fn main(init: std.process.Init) !void {
     defer allocator.free(args);
     std.debug.print("args: {any}",.{args});
 
-    const base = "/Users/mac/tach/zig";
+    const base = BASE;
     const cwd = std.Io.Dir.cwd();
     const dir = try cwd.openDir(io, base, .{ .iterate = true });
     defer dir.close(io);
-
-    const sub_path = try std.fs.path.join(allocator, &.{ base, manifest.FILE_NAME });
-    defer allocator.free(sub_path);
-
-    const manifestFile = try createFileIfNotExist(io, dir, sub_path);
-    defer manifestFile.close(io);
-
+    
 
 }
 
@@ -46,8 +42,8 @@ pub fn createFileIfNotExist(io: std.Io, cwd: std.Io.Dir, sub_path: []const u8) !
 /// if manifest already existing we only add the new dirs that werent
 /// included in the manifest, we dont delete other dirs in the manifest
 /// even if they dont exist locally
-pub fn scan(io: std.Io, allocator: std.mem.Allocator cwd: std.Io.Dir) !void {
-    const sub_path = try std.fs.path.join(allocator, &.{ base, manifest.FILE_NAME });
+pub fn scan(io: std.Io, allocator: std.mem.Allocator, dir: std.Io.Dir) !void {
+    const sub_path = try std.fs.path.join(allocator, &.{ BASE, manifest.FILE_NAME });
     defer allocator.free(sub_path);
 
     const manifestFile = try createFileIfNotExist(io, dir, sub_path);
