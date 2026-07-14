@@ -9,7 +9,6 @@ const core = @import("core/core.zig");
 const args_parser = @import("args.zig").ArgsParser;
 const VERSION = 1;
 
-const Io = std.Io;
 
 pub fn main(init: std.process.Init) !void {
     const allocator = init.gpa;
