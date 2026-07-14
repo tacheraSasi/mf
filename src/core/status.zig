@@ -14,3 +14,10 @@ pub fn status(io: std.Io, allocator: std.mem.Allocator, dir: std.Io.Dir) !void {
     const existing_manifest_data = try manifest.parseManifestFile(io, allocator, dir);
     
 }
+
+fn statusString(projects: []manifest.Project) !void {
+    return 
+    \\
+    \\
+    ;
+}
