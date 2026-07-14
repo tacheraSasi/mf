@@ -1,7 +1,7 @@
 const std = @import("std");
 const global = @import("global.zig");
 const cmd = @import("cmd.zig");
-const manifest = @import("data/manifest.zig");
+const manifest = @import("manifest.zig");
 const help = @import("help.zig");
 const args_parser = @import("args.zig").ArgsParser;
 const VERSION = 1;
@@ -141,7 +141,7 @@ pub fn scan(io: std.Io, allocator: std.mem.Allocator, dir: std.Io.Dir) !void {
 
     defer {
         for (projects.items) |p| {
-            std.debug.print("freeing dir: {s}\n", .{p.dir});
+            // std.debug.print("freeing dir: {s}\n", .{p.dir});
             allocator.free(p.dir);
             allocator.free(p.git);
         }
