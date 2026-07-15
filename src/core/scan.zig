@@ -10,7 +10,7 @@ const utils = @import("../utils.zig");
 /// if manifest already existing it only add the new dirs that werent
 /// included in the manifest, it wont delete other dirs/projects in the manifest
 /// even if they dont exist locally
-pub fn Scan(io: std.Io, allocator: std.mem.Allocator, dir: std.Io.Dir) !void {
+pub fn Scan(io: std.Io, allocator: std.mem.Allocator, dir: std.Io.Dir, console: *stdio.Console) !void {
     const sub_path = try std.fs.path.join(allocator, &.{ constants.BASE, manifest.FILE_NAME });
     defer allocator.free(sub_path);
 
@@ -75,7 +75,7 @@ pub fn Scan(io: std.Io, allocator: std.mem.Allocator, dir: std.Io.Dir) !void {
 
         try projects.append(allocator, proj);
 
-        std.debug.print("dir: {s}, git: {s}\n", .{ entry.name, result });
+        try console.print("dir: {s}, git: {s}\n", .{ entry.name, result });
     }
 
     const manifestData: manifest.Manifest = .{
@@ -94,11 +94,11 @@ pub fn Scan(io: std.Io, allocator: std.mem.Allocator, dir: std.Io.Dir) !void {
         .sub_path = sub_path,
     });
 
-    std.debug.print("Dooooneeeeeeeeeeeeeeee\n", .{});
+    try console.print("Dooooneeeeeeeeeeeeeeee\n", .{});
 
     defer {
         for (projects.items) |p| {
-            // std.debug.print("freeing dir: {s}\n", .{p.dir});
+            // try console.print("freeing dir: {s}\n", .{p.dir});
             allocator.free(p.dir);
             allocator.free(p.git);
         }

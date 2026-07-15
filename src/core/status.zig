@@ -5,12 +5,7 @@ const cmd = @import("../cmd.zig");
 const constants = @import("../constants.zig");
 const utils = @import("../utils.zig");
 
-pub fn Status(io: std.Io, allocator: std.mem.Allocator, dir: std.Io.Dir) !void {
-    var write_buf: [4096]u8 = undefined;
-    var read_buf: [4096]u8 = undefined;
-
-    var console: stdio.Console = undefined;
-    console.init(io, &write_buf, &read_buf);
+pub fn Status(io: std.Io, allocator: std.mem.Allocator, dir: std.Io.Dir, console: *stdio.Console) !void {
     const existing_manifest_data = try manifest.parseManifestFile(io, allocator, dir);
     // `parseManifestFile` dupes every .dir/.git + the []Project array into
     // `allocator`; we own all of it and must free it before returning.
@@ -39,9 +34,10 @@ fn statusString(allocator: std.mem.Allocator, projects: []manifest.Project) ![]u
     defer buf.deinit();
 
     if (projects.len > 1) {
-        try buf.writer.print("mf manifest: {d} project(s)\n", .{projects.len});
+        try buf.writer.print("mf manifest: {d} projects\n", .{projects.len});
+    } else {
+        try buf.writer.print("mf manifest: {d} project\n", .{projects.len});
     }
-    try buf.writer.print("mf manifest: {d} project\n", .{projects.len});
 
     // for (projects) |p| {
     //     try buf.writer.print("  {s} -> {s}\n", .{ p.dir, p.git });
