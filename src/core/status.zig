@@ -38,10 +38,14 @@ fn statusString(allocator: std.mem.Allocator, projects: []manifest.Project) ![]u
     var buf: std.Io.Writer.Allocating = .init(allocator);
     defer buf.deinit();
 
-    try buf.writer.print("mf manifest: {d} project(s)\n", .{projects.len});
-    for (projects) |p| {
-        try buf.writer.print("  {s} -> {s}\n", .{ p.dir, p.git });
+    if (projects.len > 1) {
+        try buf.writer.print("mf manifest: {d} project(s)\n", .{projects.len});
     }
+    try buf.writer.print("mf manifest: {d} project\n", .{projects.len});
+
+    // for (projects) |p| {
+    //     try buf.writer.print("  {s} -> {s}\n", .{ p.dir, p.git });
+    // }
 
     // dupe so the returned slice outlives `buf.deinit()`; caller must free it.
     return try allocator.dupe(u8, buf.written());

@@ -1,4 +1,5 @@
 const std = @import("std");
+const stdio = @import("stdio");
 const manifest = @import("../manifest.zig");
 const cmd = @import("../cmd.zig");
 const constants = @import("../constants.zig");
