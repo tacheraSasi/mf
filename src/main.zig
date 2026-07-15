@@ -36,9 +36,9 @@ pub fn main(init: std.process.Init) !void {
     const positional_args = parser.positional_args;
 
     switch (cliFlags.subcommand) {
-        .scan => try core.Scan(io, allocator, dir),
-        .add => try core.Add(io, allocator, dir, positional_args[0]),
-        .status => try core.Status(io, allocator, dir),
+        .scan => try core.Scan(io, allocator, dir,&console),
+        .add => try core.Add(io, allocator, dir, positional_args[0],&console),
+        .status => try core.Status(io, allocator, dir,&console),
         .rm => {
             try console.printLine("not implemented yet: rm {s}", .{positional_args[0]});
         },
