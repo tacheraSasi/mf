@@ -204,3 +204,18 @@ pub fn getProjectFromManifest(io: std.Io, allocator: std.mem.Allocator, dir: std
     // }
     return project;
 }
+
+
+/// Frees everything parseManifestFile allocated: each project's .dir/.git
+/// strings, then the []Project array. Safe to call on the empty-manifest
+/// case (static &.{} is not freed).
+pub fn free(allocator: std.mem.Allocator, m: Manifest) void {
+    for (m.projects) |p| {
+        allocator.free(p.dir);
+        allocator.free(p.git);
+    }
+    if (m.projects.len > 0) {
+        allocator.free(m.projects);
+    }
+}
+
