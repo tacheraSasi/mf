@@ -126,31 +126,31 @@ pub fn doesProjectExistInManifestFile(io: std.Io, allocator: std.mem.Allocator, 
     return false;
 }
 
-/// removes a project from the manifest file
-/// but it does now delete the dir form disk
-/// at least for now
-pub fn removeFromManifestFile(io: std.Io, allocator: std.mem.Allocator, dir: std.Io.Dir, proj: Project, existing_manifest_data: ?Manifest) !Manifest {
+/// removes a project from the manifest file by dir name.
+/// does NOT delete the dir from disk at least for now.
+/// Returns `error.ProjectNotFound` if `projDir` isn't in the manifest.
+pub fn removeFromManifestFile(io: std.Io, allocator: std.mem.Allocator, dir: std.Io.Dir, projDir: []const u8, existing_manifest_data: ?Manifest) !void {
     const existing_data = existing_manifest_data orelse try parseManifestFile(io, allocator, dir);
-    defer {
-        if (existing_data.projects.len > 0) {
-            allocator.free(existing_data.projects);
-        }
-    }
+    // freeManifest frees every string + the array. The ArrayList below holds
+    // shallow copies (same string pointers), but we've already written the
+    // file by the time this runs, so the dangling pointers are never read.
+    defer freeManifest(allocator, existing_data);
 
     var projects: std.ArrayList(Project) = .empty;
     defer projects.deinit(allocator);
 
-    // skipping the passed proj that is required to be removed
-    // and appending the rest
+    // Append every project EXCEPT the one matching projDir.
     for (existing_data.projects) |data| {
-        if (std.mem.eql(u8, data.git, proj.git) and std.mem.eql(u8, data.dir, proj.dir)) {
-            continue;
-        }
+        if (std.mem.eql(u8, data.dir, projDir)) continue;
         try projects.append(allocator, data);
     }
 
-    try projects.append(allocator, proj);
-    const manifestData: Manifest = .{
+    // If nothing was skipped, the project wasn't in the manifest.
+    if (projects.items.len == existing_data.projects.len) {
+        return error.ProjectNotFound;
+    }
+
+    const manifest_data: Manifest = .{
         .version = existing_data.version,
         .projects = projects.items,
     };
@@ -158,47 +158,33 @@ pub fn removeFromManifestFile(io: std.Io, allocator: std.mem.Allocator, dir: std
     var buf: std.Io.Writer.Allocating = .init(allocator);
     defer buf.deinit();
 
-    try buf.writer.print("{f}", .{std.json.fmt(manifestData, .{ .whitespace = .indent_2 })});
+    try buf.writer.print("{f}", .{std.json.fmt(manifest_data, .{ .whitespace = .indent_2 })});
     const json_data = buf.written();
 
     try dir.writeFile(io, .{
         .data = json_data,
         .sub_path = FILE_NAME,
     });
-    defer {
-        for (projects.items) |p| {
-            allocator.free(p.dir);
-            allocator.free(p.git);
-        }
-    }
-
-    return manifestData;
 }
 
-pub fn getProjectFromManifest(io: std.Io, allocator: std.mem.Allocator, dir: std.Io.Dir, projDir: []const u8, existing_manifest_data: ?Manifest) !Project {
+/// looks up a project by dir name. Returns null if not found.
+/// The returned Project's .dir/.git are duped into `allocator` so they
+/// outlive this function's internal cleanup. Caller must free them.
+pub fn getProjectFromManifest(io: std.Io, allocator: std.mem.Allocator, dir: std.Io.Dir, projDir: []const u8, existing_manifest_data: ?Manifest) !?Project {
     const existing_data = existing_manifest_data orelse try parseManifestFile(io, allocator, dir);
-    defer {
-        if (existing_data.projects.len > 0) {
-            allocator.free(existing_data.projects);
-        }
-    }
+    defer freeManifest(allocator, existing_data);
 
-    var project: Project = undefined;
-
-    // skipping the passed proj that is required to be removed
-    // and appending the rest
     for (existing_data.projects) |data| {
         if (std.mem.eql(u8, data.dir, projDir)) {
-            project = data;
+            // Dupe so the returned strings survive freeManifest's defer.
+            return .{
+                .dir = try allocator.dupe(u8, data.dir),
+                .git = try allocator.dupe(u8, data.git),
+            };
         }
     }
-
-    // if (project == undefined) {
-    //     return error.ProjectNotFound;
-    // }
-    return project;
+    return null;
 }
-
 
 /// Frees everything parseManifestFile allocated: each project's .dir/.git
 /// strings, then the []Project array. Safe to call on the empty-manifest
@@ -212,4 +198,3 @@ pub fn freeManifest(allocator: std.mem.Allocator, m: Manifest) void {
         allocator.free(m.projects);
     }
 }
-
