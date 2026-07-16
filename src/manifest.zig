@@ -111,7 +111,14 @@ pub fn appendToManifestFile(io: std.Io, allocator: std.mem.Allocator, dir: std.I
 /// returns true if the project exists in the manifest file
 pub fn doesProjectExistInManifestFile(io: std.Io, allocator: std.mem.Allocator, dir: std.Io.Dir, projDir: []const u8) !bool {
     const existing_data = try parseManifestFile(io, allocator, dir);
+    // parseManifestFile allocates: the []Project array AND every .dir/.git
+    // string inside. Freeing the array alone leaks the strings all three
+    // must be freed. Order: strings first (looping the array), then array.
     defer {
+        for (existing_data.projects) |p| {
+            allocator.free(p.dir);
+            allocator.free(p.git);
+        }
         if (existing_data.projects.len > 0) {
             allocator.free(existing_data.projects);
         }
