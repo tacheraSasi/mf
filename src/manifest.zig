@@ -112,7 +112,7 @@ pub fn appendToManifestFile(io: std.Io, allocator: std.mem.Allocator, dir: std.I
 pub fn doesProjectExistInManifestFile(io: std.Io, allocator: std.mem.Allocator, dir: std.Io.Dir, projDir: []const u8)!bool {
     const existing_data = try parseManifestFile(io, allocator, dir);
     defer {
-        if (existing_data.len > 0) {
+        if (existing_data.projects.len > 0) {
             allocator.free(existing_data);
         }
     }
@@ -173,4 +173,30 @@ pub fn removeFromManifestFile(io: std.Io, allocator: std.mem.Allocator, dir: std
     }
 
     return manifestData;
+}
+
+
+pub fn getProjectFromManifest(io: std.Io, allocator: std.mem.Allocator, dir: std.Io.Dir, projDir: []const u8, existing_manifest_data: ?Manifest) !Manifest.Project {
+    const existing_data = existing_manifest_data orelse try parseManifestFile(io, allocator, dir);
+    defer {
+        if (existing_data.len > 0) {
+            allocator.free(existing_data);
+        }
+    }
+
+    var project: Manifest.Project = undefined;
+
+    // skipping the passed proj that is required to be removed
+    // and appending the rest
+    for (existing_data.projects) |data| {
+        if (std.mem.eql(u8,data.dir,projDir)) {
+            project = data;
+        }
+    }
+
+    if(project == undefined){
+        return error.ProjectNotFound;
+    }
+    return project;
+    
 }
