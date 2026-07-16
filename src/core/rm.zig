@@ -10,7 +10,7 @@ pub fn Rm(io: std.Io, allocator: std.mem.Allocator, dir: std.Io.Dir, projDir: []
         return;
     }
 
-    const proj = try manifest.getProjectFromManifest(io, allocator, dir, projDir);
+    const proj = try manifest.getProjectFromManifest(io, allocator, dir, projDir,null);
 
-    try manifest.removeFromManifestFile(io, allocator, dir, proj);
+    _ = try manifest.removeFromManifestFile(io, allocator, dir, proj,null);
 }

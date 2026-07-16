@@ -109,21 +109,20 @@ pub fn appendToManifestFile(io: std.Io, allocator: std.mem.Allocator, dir: std.I
 }
 
 /// returns true if the project exists in the manifest file
-pub fn doesProjectExistInManifestFile(io: std.Io, allocator: std.mem.Allocator, dir: std.Io.Dir, projDir: []const u8)!bool {
+pub fn doesProjectExistInManifestFile(io: std.Io, allocator: std.mem.Allocator, dir: std.Io.Dir, projDir: []const u8) !bool {
     const existing_data = try parseManifestFile(io, allocator, dir);
     defer {
         if (existing_data.projects.len > 0) {
-            allocator.free(existing_data);
+            allocator.free(existing_data.projects);
         }
     }
 
     for (existing_data.projects) |data| {
-        if (std.mem.eql(u8, data.dir, projDir)){
+        if (std.mem.eql(u8, data.dir, projDir)) {
             return true;
         }
-        return false;
     }
-
+    return false;
 }
 
 /// removes a project from the manifest file
@@ -132,8 +131,8 @@ pub fn doesProjectExistInManifestFile(io: std.Io, allocator: std.mem.Allocator, 
 pub fn removeFromManifestFile(io: std.Io, allocator: std.mem.Allocator, dir: std.Io.Dir, proj: Project, existing_manifest_data: ?Manifest) !Manifest {
     const existing_data = existing_manifest_data orelse try parseManifestFile(io, allocator, dir);
     defer {
-        if (existing_data.len > 0) {
-            allocator.free(existing_data);
+        if (existing_data.projects.len > 0) {
+            allocator.free(existing_data.projects);
         }
     }
 
@@ -146,7 +145,7 @@ pub fn removeFromManifestFile(io: std.Io, allocator: std.mem.Allocator, dir: std
         if (std.mem.eql(u8, data.git, proj.git) and std.mem.eql(u8, data.dir, proj.dir)) {
             continue;
         }
-        projects.append(allocator, data);
+        try projects.append(allocator, data);
     }
 
     try projects.append(allocator, proj);
@@ -175,28 +174,26 @@ pub fn removeFromManifestFile(io: std.Io, allocator: std.mem.Allocator, dir: std
     return manifestData;
 }
 
-
-pub fn getProjectFromManifest(io: std.Io, allocator: std.mem.Allocator, dir: std.Io.Dir, projDir: []const u8, existing_manifest_data: ?Manifest) !Manifest.Project {
+pub fn getProjectFromManifest(io: std.Io, allocator: std.mem.Allocator, dir: std.Io.Dir, projDir: []const u8, existing_manifest_data: ?Manifest) !Project {
     const existing_data = existing_manifest_data orelse try parseManifestFile(io, allocator, dir);
     defer {
-        if (existing_data.len > 0) {
+        if (existing_data.projects.len > 0) {
             allocator.free(existing_data);
         }
     }
 
-    var project: Manifest.Project = undefined;
+    var project: Project = undefined;
 
     // skipping the passed proj that is required to be removed
     // and appending the rest
     for (existing_data.projects) |data| {
-        if (std.mem.eql(u8,data.dir,projDir)) {
+        if (std.mem.eql(u8, data.dir, projDir)) {
             project = data;
         }
     }
 
-    if(project == undefined){
-        return error.ProjectNotFound;
-    }
+    // if (project == undefined) {
+    //     return error.ProjectNotFound;
+    // }
     return project;
-    
 }
