@@ -22,9 +22,6 @@ pub fn main(init: std.process.Init) !void {
     const args = try init.minimal.args.toSlice(allocator);
     defer allocator.free(args);
 
-    // const parser = args_parser.parse(args) catch {
-    //     std.debug.print("{s}",help.HelpText()); // for now i assume any error will only be invalid flag or subcommand
-    // };
     const parser = try args_parser.parse(args);
 
     const base = constants.BASE;
@@ -39,9 +36,7 @@ pub fn main(init: std.process.Init) !void {
         .scan => try core.Scan(io, allocator, dir,&console),
         .add => try core.Add(io, allocator, dir, positional_args[0],&console),
         .status => try core.Status(io, allocator, dir,&console),
-        .rm => {
-            try console.printLine("not implemented yet: rm {s}", .{positional_args[0]});
-        },
+        .rm => try core.Rm(io, allocator, dir,positional_args[0],&console),
         .nuke => {
             try console.printLine("not implemented yet: rm {s}", .{positional_args[0]});
         },
