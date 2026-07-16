@@ -100,7 +100,55 @@ pub fn appendToManifestFile(io: std.Io, allocator: std.mem.Allocator, dir: std.I
     });
     defer {
         for (projects.items) |p| {
-            // std.debug.print("freeing dir: {s}\n", .{p.dir});
+            allocator.free(p.dir);
+            allocator.free(p.git);
+        }
+    }
+
+    return manifestData;
+}
+
+/// removes a project from the manifest file
+/// but it does now delete the dir form disk
+/// at least for now
+pub fn removeFromManifestFile(io: std.Io, allocator: std.mem.Allocator, dir: std.Io.Dir, proj: Project, existing_manifest_data: ?Manifest) !Manifest {
+    const existing_data = existing_manifest_data orelse try parseManifestFile(io, allocator, dir);
+    defer {
+        if (existing_data.len > 0) {
+            allocator.free(existing_data);
+        }
+    }
+
+    var projects: std.ArrayList(Project) = .empty;
+    defer projects.deinit(allocator);
+
+    // skipping the passed proj that is required to be removed
+    // and appending the rest
+    for (existing_data.projects) |data| {
+        if (std.mem.eql(u8, data.git, proj.git) and std.mem.eql(u8, data.dir, proj.dir)) {
+            continue;
+        }
+        projects.append(allocator, data);
+    }
+
+    try projects.append(allocator, proj);
+    const manifestData: Manifest = .{
+        .version = existing_data.version,
+        .projects = projects.items,
+    };
+
+    var buf: std.Io.Writer.Allocating = .init(allocator);
+    defer buf.deinit();
+
+    try buf.writer.print("{f}", .{std.json.fmt(manifestData, .{ .whitespace = .indent_2 })});
+    const json_data = buf.written();
+
+    try dir.writeFile(io, .{
+        .data = json_data,
+        .sub_path = FILE_NAME,
+    });
+    defer {
+        for (projects.items) |p| {
             allocator.free(p.dir);
             allocator.free(p.git);
         }
