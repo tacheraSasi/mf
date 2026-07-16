@@ -108,6 +108,24 @@ pub fn appendToManifestFile(io: std.Io, allocator: std.mem.Allocator, dir: std.I
     return manifestData;
 }
 
+/// returns true if the project exists in the manifest file
+pub fn doesProjectExistInManifestFile(io: std.Io, allocator: std.mem.Allocator, dir: std.Io.Dir, projDir: []const u8)!bool {
+    const existing_data = try parseManifestFile(io, allocator, dir);
+    defer {
+        if (existing_data.len > 0) {
+            allocator.free(existing_data);
+        }
+    }
+
+    for (existing_data.projects) |data| {
+        if (std.mem.eql(u8, data.dir, projDir)){
+            return true;
+        }
+        return false;
+    }
+
+}
+
 /// removes a project from the manifest file
 /// but it does now delete the dir form disk
 /// at least for now
