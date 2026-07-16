@@ -13,4 +13,6 @@ pub fn Rm(io: std.Io, allocator: std.mem.Allocator, dir: std.Io.Dir, projDir: []
     const proj = try manifest.getProjectFromManifest(io, allocator, dir, projDir,null);
 
     _ = try manifest.removeFromManifestFile(io, allocator, dir, proj,null);
+
+    try console.printLine("Project: {s} with repo: {s} was remove from mf manifest successfully",.{proj.dir, proj.git});
 }
