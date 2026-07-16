@@ -178,7 +178,7 @@ pub fn getProjectFromManifest(io: std.Io, allocator: std.mem.Allocator, dir: std
     const existing_data = existing_manifest_data orelse try parseManifestFile(io, allocator, dir);
     defer {
         if (existing_data.projects.len > 0) {
-            allocator.free(existing_data);
+            allocator.free(existing_data.projects);
         }
     }
 
