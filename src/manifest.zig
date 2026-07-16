@@ -115,13 +115,7 @@ pub fn doesProjectExistInManifestFile(io: std.Io, allocator: std.mem.Allocator, 
     // string inside. Freeing the array alone leaks the strings all three
     // must be freed. Order: strings first (looping the array), then array.
     defer {
-        for (existing_data.projects) |p| {
-            allocator.free(p.dir);
-            allocator.free(p.git);
-        }
-        if (existing_data.projects.len > 0) {
-            allocator.free(existing_data.projects);
-        }
+        freeManifest(allocator, existing_data);
     }
 
     for (existing_data.projects) |data| {
@@ -209,7 +203,7 @@ pub fn getProjectFromManifest(io: std.Io, allocator: std.mem.Allocator, dir: std
 /// Frees everything parseManifestFile allocated: each project's .dir/.git
 /// strings, then the []Project array. Safe to call on the empty-manifest
 /// case (static &.{} is not freed).
-pub fn free(allocator: std.mem.Allocator, m: Manifest) void {
+pub fn freeManifest(allocator: std.mem.Allocator, m: Manifest) void {
     for (m.projects) |p| {
         allocator.free(p.dir);
         allocator.free(p.git);
