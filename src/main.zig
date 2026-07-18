@@ -34,7 +34,12 @@ pub fn main(init: std.process.Init) !void {
 
     switch (cliFlags.subcommand) {
         .scan => try core.Scan(io, allocator, dir,&console),
-        .add => try core.Add(io, allocator, dir, positional_args[0],&console),
+        .add => {
+            if (positional_args.len == 0) {
+                try console.printLine("Invalid usage\n{s}", .{help.HelpText(),});
+            }
+            try core.Add(io, allocator, dir, positional_args[0],&console);
+        },
         .status => try core.Status(io, allocator, dir,&console),
         .rm => try core.Rm(io, allocator, dir,positional_args[0],&console),
         .nuke => {
