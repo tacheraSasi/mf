@@ -36,14 +36,21 @@ pub fn main(init: std.process.Init) !void {
         .scan => try core.Scan(io, allocator, dir,&console),
         .add => {
             if (positional_args.len == 0) {
-                try console.printLine("Invalid usage\n{s}", .{help.HelpText(),});
+                try console.printLine("Invalid usage: missing git url \n{s}", .{help.HelpText(),});
+                return;
             }
             try core.Add(io, allocator, dir, positional_args[0],&console);
         },
         .status => try core.Status(io, allocator, dir,&console),
-        .rm => try core.Rm(io, allocator, dir,positional_args[0],&console),
+        .rm => {
+            if (positional_args.len == 0) {
+                try console.printLine("Invalid usage: missing project dir name \n{s}", .{help.HelpText(),});
+                return;
+            }
+            try core.Rm(io, allocator, dir,positional_args[0],&console);
+        },
         .nuke => {
-            try console.printLine("not implemented yet: rm {s}", .{positional_args[0]});
+            try console.printLine("not implemented", .{});
         },
         .none => try console.printLine(help.HelpText(), .{}),
     }
