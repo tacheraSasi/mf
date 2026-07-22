@@ -10,7 +10,7 @@ const utils = @import("../utils.zig");
 /// even if they dont exist locally
 pub fn Scan(io: std.Io, allocator: std.mem.Allocator, dir: std.Io.Dir, console: *stdio.Console) !void {
     // The manifest file lives at the root of the scanned dir. Since `dir`
-    // was opened on "." (process cwd), this is just the filename — no BASE join.
+    // was opened on "." (process cwd), this is just the filename no BASE join.
     const sub_path = manifest.FILE_NAME;
 
     const manifestFile = try utils.createFileIfNotExist(io, dir, sub_path);
