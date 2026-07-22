@@ -6,6 +6,7 @@ pub fn HelpText() []const u8 {
     \\usage: mf <command> [options] [args]
     \\
     \\commands:
+    \\  init                      Initializes the workspace by creating an empty manifest file 
     \\  scan                      scan BASE and (re)build the manifest from existing git repos
     \\  add <git-url>             clone <git-url> into BASE, then refresh the manifest
     \\  status                    print a summary of every project tracked in the manifest
