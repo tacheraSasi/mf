@@ -1,6 +1,6 @@
 const std = @import("std");
 
-pub const Subcommand = enum { none, scan, add, status, rm, nuke };
+pub const Subcommand = enum { none, scan, add, status, rm, nuke, init };
 
 pub const CliFlags = struct {
     subcommand: Subcommand = .none,
