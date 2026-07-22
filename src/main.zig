@@ -53,6 +53,9 @@ pub fn main(init: std.process.Init) !void {
             }
             try core.Rm(io, allocator, dir, positional_args[0], &console);
         },
+        .init => {
+            try core.Init(io, dir, manifest.FILE_NAME, &console);
+        },
         .nuke => {
             try console.printLine("not implemented", .{});
         },
