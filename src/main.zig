@@ -3,12 +3,9 @@ const stdio = @import("stdio");
 const cmd = @import("cmd.zig");
 const manifest = @import("manifest.zig");
 const help = @import("help.zig");
-const constants = @import("constants.zig");
 const core = @import("core/core.zig");
 
 const args_parser = @import("args.zig").ArgsParser;
-const VERSION = 1;
-
 
 pub fn main(init: std.process.Init) !void {
     const allocator = init.gpa;
@@ -24,30 +21,37 @@ pub fn main(init: std.process.Init) !void {
 
     const parser = try args_parser.parse(args);
 
-    const base = constants.BASE;
+    // TODO: i will an optional flags to set the path
+    // For now operate on the current working directory. The opened `dir` handle IS
+    // the process cwd, so all relative paths (manifest file, repo subdirs)
+    // resolve correctly without any hardcoded base path.
     const cwd = std.Io.Dir.cwd();
-    const dir = try cwd.openDir(io, base, .{ .iterate = true });
+    const dir = try cwd.openDir(io, ".", .{ .iterate = true });
     defer dir.close(io);
 
     const cliFlags = parser.cli_flags;
     const positional_args = parser.positional_args;
 
     switch (cliFlags.subcommand) {
-        .scan => try core.Scan(io, allocator, dir,&console),
+        .scan => try core.Scan(io, allocator, dir, &console),
         .add => {
             if (positional_args.len == 0) {
-                try console.printLine("Invalid usage: missing git url \n{s}", .{help.HelpText(),});
+                try console.printLine("Invalid usage: missing git url \n{s}", .{
+                    help.HelpText(),
+                });
                 return;
             }
-            try core.Add(io, allocator, dir, positional_args[0],&console);
+            try core.Add(io, allocator, dir, positional_args[0], &console);
         },
-        .status => try core.Status(io, allocator, dir,&console),
+        .status => try core.Status(io, allocator, dir, &console),
         .rm => {
             if (positional_args.len == 0) {
-                try console.printLine("Invalid usage: missing project dir name \n{s}", .{help.HelpText(),});
+                try console.printLine("Invalid usage: missing project dir name \n{s}", .{
+                    help.HelpText(),
+                });
                 return;
             }
-            try core.Rm(io, allocator, dir,positional_args[0],&console);
+            try core.Rm(io, allocator, dir, positional_args[0], &console);
         },
         .nuke => {
             try console.printLine("not implemented", .{});

@@ -2,17 +2,16 @@ const std = @import("std");
 const stdio = @import("stdio");
 const manifest = @import("../manifest.zig");
 const cmd = @import("../cmd.zig");
-const constants = @import("../constants.zig");
 const utils = @import("../utils.zig");
-
 
 /// scans a dir and creates the manifest file
 /// if manifest already existing it only add the new dirs that werent
 /// included in the manifest, it wont delete other dirs/projects in the manifest
 /// even if they dont exist locally
 pub fn Scan(io: std.Io, allocator: std.mem.Allocator, dir: std.Io.Dir, console: *stdio.Console) !void {
-    const sub_path = try std.fs.path.join(allocator, &.{ constants.BASE, manifest.FILE_NAME });
-    defer allocator.free(sub_path);
+    // The manifest file lives at the root of the scanned dir. Since `dir`
+    // was opened on "." (process cwd), this is just the filename — no BASE join.
+    const sub_path = manifest.FILE_NAME;
 
     const manifestFile = try utils.createFileIfNotExist(io, dir, sub_path);
     defer manifestFile.close(io);
@@ -54,12 +53,9 @@ pub fn Scan(io: std.Io, allocator: std.mem.Allocator, dir: std.Io.Dir, console: 
         }
         if (already_listed) continue;
 
-        // git must run inside the repo; use `-C <abspath>` since the process
-        // cwd is not `base`.
-        const repo_path = try std.fmt.allocPrint(allocator, "{s}/{s}", .{ constants.BASE, entry.name });
-        defer allocator.free(repo_path);
-
-        const argv = [_][]const u8{ "git", "-C", repo_path, "remote", "get-url", "origin" };
+        // git runs from process cwd, which IS the scanned dir (opened on ".").
+        // So entry.name is a valid relative path for `git -C`.
+        const argv = [_][]const u8{ "git", "-C", entry.name, "remote", "get-url", "origin" };
         const result = cmd.run(io, allocator, &argv) catch |err| switch (err) {
             error.ExitCodeFailure => {
                 continue; // we silently skip the dir wthout a repo
@@ -79,7 +75,7 @@ pub fn Scan(io: std.Io, allocator: std.mem.Allocator, dir: std.Io.Dir, console: 
     }
 
     const manifestData: manifest.Manifest = .{
-        .version = constants.VERSION,
+        .version = 1,
         .projects = projects.items,
     };
 
