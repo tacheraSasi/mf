@@ -10,11 +10,12 @@ pub fn HelpText() []const u8 {
     \\  scan                      scan BASE and (re)build the manifest from existing git repos
     \\  add <git-url>             clone <git-url> into BASE, then refresh the manifest
     \\  status                    print a summary of every project tracked in the manifest
-    \\  rm <dir>                  remove a project from the manifest (leaves the dir on disk)
+    \\  rm <dir> [flags]                  remove a project from the manifest (leaves the dir on disk)
     \\  nuke                      not implemented yet
     \\
     \\options:
     \\  --verbose                 print extra diagnostic output
+    \\  --purge                   works along side with rm, will delete the entire project dir from the disk
     \\
     \\positional args:
     \\  <git-url>                 required by `add`

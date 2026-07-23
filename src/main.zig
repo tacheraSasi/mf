@@ -19,7 +19,7 @@ pub fn main(init: std.process.Init) !void {
     const args = try init.minimal.args.toSlice(allocator);
     defer allocator.free(args);
 
-    const parser = try args_parser.parse(args);
+    const parser = try args_parser.parse(allocator,args);
 
     // TODO: i will an optional flags to set the path
     // For now operate on the current working directory. The opened `dir` handle IS
@@ -31,6 +31,7 @@ pub fn main(init: std.process.Init) !void {
 
     const cliFlags = parser.cli_flags;
     const positional_args = parser.positional_args;
+    defer allocator.free(positional_args);
 
     switch (cliFlags.subcommand) {
         .scan => try core.Scan(io, allocator, dir, &console),
@@ -51,7 +52,7 @@ pub fn main(init: std.process.Init) !void {
                 });
                 return;
             }
-            try core.Rm(io, allocator, dir, positional_args[0], &console);
+            try core.Rm(io, allocator, dir, positional_args[0],cliFlags.purge, &console);
         },
         .init => {
             try core.Init(io, dir, manifest.FILE_NAME, &console);

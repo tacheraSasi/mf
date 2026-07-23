@@ -2,11 +2,17 @@ const std = @import("std");
 
 pub const Subcommand = enum { none, scan, add, status, rm, nuke, init };
 
+/// cli flags e.g --verbose
 pub const CliFlags = struct {
     subcommand: Subcommand = .none,
     verbose: bool = false,
+
+    /// --purge will remove the local dir with rm
+    /// `mf rm <somedir> --purge`
+    purge: bool = false,
 };
 
+/// parses the cli arg
 pub const ArgsParser = struct {
     cli_flags: CliFlags,
 
@@ -15,12 +21,16 @@ pub const ArgsParser = struct {
 
     const Self = @This();
 
-    pub fn parse(args: []const [:0]const u8) !Self {
+    pub fn parse(allocator: std.mem.Allocator, args: []const [:0]const u8) !Self {
         var flags: CliFlags = .{};
-        var positional: []const []const u8 = &.{};
+        var positional: std.ArrayList([]const u8) = .empty;
+        errdefer positional.deinit(allocator);
 
         // Just the program name, nothing to parse here haha.
-        if (args.len <= 1) return .{ .cli_flags = flags, .positional_args = positional };
+        if (args.len <= 1) {
+            const empty = try allocator.dupe([]const u8, &.{});
+                return .{ .cli_flags = flags, .positional_args = empty };
+        }
 
         var i: usize = 1;
 
@@ -38,9 +48,10 @@ pub const ArgsParser = struct {
         while (i < args.len) : (i += 1) {
             const arg = args[i];
 
+            // Not a `--foo` flag -> it's a positional. we collect it and keep going.
             if (arg.len < 2 or !std.mem.startsWith(u8, arg, "--")) {
-                positional = args[i..];
-                break;
+                try positional.append(allocator, arg);
+                continue;
             }
 
             const flag_name = arg[2..]; // stripping "--"
@@ -62,7 +73,9 @@ pub const ArgsParser = struct {
             if (!found) return error.UnknownFlag;
         }
 
-        return .{ .cli_flags = flags, .positional_args = positional };
+        const owned_positionals = try allocator.dupe([]const u8, positional.items);
+        positional.deinit(allocator);
+        return .{ .cli_flags = flags, .positional_args = owned_positionals };
     }
 
     pub fn Test(self: *const Self) void {
