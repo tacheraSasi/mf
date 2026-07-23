@@ -2,11 +2,13 @@ const std = @import("std");
 
 pub const Subcommand = enum { none, scan, add, status, rm, nuke, init };
 
+/// cli flags e.g --verbose
 pub const CliFlags = struct {
     subcommand: Subcommand = .none,
     verbose: bool = false,
 };
 
+/// parses the cli arg
 pub const ArgsParser = struct {
     cli_flags: CliFlags,
 
