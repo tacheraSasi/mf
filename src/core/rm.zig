@@ -19,5 +19,5 @@ pub fn Rm(io: std.Io, allocator: std.mem.Allocator, dir: std.Io.Dir, projDir: []
         try dir.deleteDir(io, projDir);
     }
 
-    try console.printLine("Project: {s} was removed from mf manifest successfully", .{projDir});
+    try console.printLine("Project: {s} was removed successfully", .{projDir});
 }
