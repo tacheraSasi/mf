@@ -51,7 +51,7 @@ pub fn main(init: std.process.Init) !void {
                 });
                 return;
             }
-            try core.Rm(io, allocator, dir, positional_args[0], &console);
+            try core.Rm(io, allocator, dir, positional_args[0],cliFlags.purge, &console);
         },
         .init => {
             try core.Init(io, dir, manifest.FILE_NAME, &console);
