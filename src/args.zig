@@ -2,11 +2,17 @@ const std = @import("std");
 
 pub const Subcommand = enum { none, scan, add, status, rm, nuke, init };
 
+/// cli flags e.g --verbose
 pub const CliFlags = struct {
     subcommand: Subcommand = .none,
     verbose: bool = false,
+
+    /// --purge will remove the local dir with rm
+    /// `mf rm <somedir> --purge`
+    purge: bool = false,
 };
 
+/// parses the cli arg
 pub const ArgsParser = struct {
     cli_flags: CliFlags,
 
