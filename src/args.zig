@@ -27,7 +27,10 @@ pub const ArgsParser = struct {
         errdefer positional.deinit(allocator);
 
         // Just the program name, nothing to parse here haha.
-        if (args.len <= 1) return .{ .cli_flags = flags, .positional_args = positional };
+        if (args.len <= 1) {
+            const empty = try allocator.dupe([]const u8, &.{});
+                return .{ .cli_flags = flags, .positional_args = empty };
+        }
 
         var i: usize = 1;
 
@@ -70,7 +73,9 @@ pub const ArgsParser = struct {
             if (!found) return error.UnknownFlag;
         }
 
-        return .{ .cli_flags = flags, .positional_args = positional.items };
+        const owned_positionals = try allocator.dupe([]const u8, positional.items);
+        positional.deinit(allocator);
+        return .{ .cli_flags = flags, .positional_args = owned_positionals };
     }
 
     pub fn Test(self: *const Self) void {
