@@ -1,5 +1,6 @@
 const std = @import("std");
 const stdio = @import("stdio");
+const cmd = @import("../cmd.zig");
 const manifest = @import("../manifest.zig");
 
 /// removes the project from the manifest
@@ -14,10 +15,22 @@ pub fn Rm(io: std.Io, allocator: std.mem.Allocator, dir: std.Io.Dir, projDir: []
         else => return err,
     };
 
-    if(purge){
-        try console.printLine("Purging the local dir: {s}", .{projDir});
-        try dir.deleteDir(io, projDir);
+    if (purge) {
+        // SAFETY CHECK: we refuse to delete if repo has uncommitted/unpushed work.
+        const status_argv = [_][]const u8{ "git", "-C", projDir, "status", "--porcelain" };
+        const status_out = cmd.run(io, allocator, &status_argv) catch |err| switch (err) {
+            error.ExitCodeFailure => return error.GitCheckFailed,  // not a repo? abort
+            else => return err,
+        };
+        defer allocator.free(status_out);
+        if (status_out.len > 0) {
+            try console.printLine("refusing to purge: {s} has uncommitted changes", .{projDir});
+            return;
+        }
+        // TODO: also check for unpushed commits (git log @{u}..HEAD)
+        try dir.deleteTree(io, projDir);
     }
+
 
     try console.printLine("Project: {s} was removed successfully", .{projDir});
 }
