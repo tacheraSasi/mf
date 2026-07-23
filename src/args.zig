@@ -21,9 +21,10 @@ pub const ArgsParser = struct {
 
     const Self = @This();
 
-    pub fn parse(args: []const [:0]const u8) !Self {
+    pub fn parse(allocator: std.mem.Allocator, args: []const [:0]const u8) !Self {
         var flags: CliFlags = .{};
-        var positional: []const []const u8 = &.{};
+        var positional: std.ArrayList([]const u8) = .empty;
+        errdefer positional.deinit(allocator);
 
         // Just the program name, nothing to parse here haha.
         if (args.len <= 1) return .{ .cli_flags = flags, .positional_args = positional };
@@ -44,9 +45,10 @@ pub const ArgsParser = struct {
         while (i < args.len) : (i += 1) {
             const arg = args[i];
 
+            // Not a `--foo` flag -> it's a positional. we collect it and keep going.
             if (arg.len < 2 or !std.mem.startsWith(u8, arg, "--")) {
-                positional = args[i..];
-                break;
+                try positional.append(allocator, arg);
+                continue;
             }
 
             const flag_name = arg[2..]; // stripping "--"
@@ -68,7 +70,7 @@ pub const ArgsParser = struct {
             if (!found) return error.UnknownFlag;
         }
 
-        return .{ .cli_flags = flags, .positional_args = positional };
+        return .{ .cli_flags = flags, .positional_args = positional.items };
     }
 
     pub fn Test(self: *const Self) void {
