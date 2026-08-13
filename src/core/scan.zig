@@ -1,7 +1,10 @@
 const std = @import("std");
+
 const stdio = @import("stdio");
-const manifest = @import("../manifest.zig");
+
 const cmd = @import("../cmd.zig");
+const git = @import("../git.zig");
+const manifest = @import("../manifest.zig");
 const utils = @import("../utils.zig");
 
 /// scans a dir and creates the manifest file
@@ -53,17 +56,12 @@ pub fn Scan(io: std.Io, allocator: std.mem.Allocator, dir: std.Io.Dir, console: 
         }
         if (already_listed) continue;
 
-        // git runs from process cwd, which IS the scanned dir (opened on ".").
-        // So entry.name is a valid relative path for `git -C`.
-        const argv = [_][]const u8{ "git", "-C", entry.name, "remote", "get-url", "origin" };
-        const result = cmd.run(io, allocator, &argv) catch |err| switch (err) {
+        const result = git.GetGitUrl(io, allocator, entry.name) catch |err| switch (err) {
             error.ExitCodeFailure => {
-                continue; // we silently skip the dir wthout a repo
+                continue; // i skip the dir that has no git repo, assumption they will error out
             },
             else => return err,
         };
-        // defer allocator.free(result); // caller owns stdout (see cmd.zig)
-
         const proj: manifest.Project = .{
             .dir = try allocator.dupe(u8, entry.name), // here i dupe so that proj.dir owns its own memory nstead of aliasing the iterator's internal buffer.
             .git = result,

@@ -1,11 +1,12 @@
 const std = @import("std");
+
 const stdio = @import("stdio");
-const cmd = @import("cmd.zig");
-const manifest = @import("manifest.zig");
-const help = @import("help.zig");
-const core = @import("core/core.zig");
 
 const args_parser = @import("args.zig").ArgsParser;
+const cmd = @import("cmd.zig");
+const core = @import("core/core.zig");
+const help = @import("help.zig");
+const manifest = @import("manifest.zig");
 
 pub fn main(init: std.process.Init) !void {
     const allocator = init.gpa;
@@ -19,7 +20,7 @@ pub fn main(init: std.process.Init) !void {
     const args = try init.minimal.args.toSlice(allocator);
     defer allocator.free(args);
 
-    const parser = try args_parser.parse(allocator,args);
+    const parser = try args_parser.parse(allocator, args);
 
     // TODO: i will an optional flags to set the path
     // For now operate on the current working directory. The opened `dir` handle IS
@@ -52,7 +53,7 @@ pub fn main(init: std.process.Init) !void {
                 });
                 return;
             }
-            try core.Rm(io, allocator, dir, positional_args[0],cliFlags.purge, &console);
+            try core.Rm(io, allocator, dir, positional_args[0], cliFlags.purge, &console);
         },
         .init => {
             try core.Init(io, dir, manifest.FILE_NAME, &console);
