@@ -42,6 +42,7 @@ pub fn runStream(
     argv: []const []const u8,
     writer: *std.Io.Writer,
 ) !void {
+    _ = allocator;
     var child = try std.process.spawn(io, .{ .argv = argv, .stdin = .ignore, .stdout = .pipe, .stderr = .pipe });
 
     defer child.kill(io);
@@ -55,9 +56,8 @@ pub fn runStream(
     const out_r = &out_fr.interface;
     const err_r = &err_fr.interface;
 
-    _ = err_r.streamRemaining(writer) catch |err| switch (err) {
-        error.EndOfStream => {},
-        else => |e| return e,
+    _ = err_r.streamRemaining(writer) catch |err| {
+        return err;
     };
 
     //Draining stdout so the pipe does not fill and deadlock the child
