@@ -11,16 +11,27 @@ const manifest = @import("manifest.zig");
 pub fn main(init: std.process.Init) !void {
     const allocator = init.gpa;
     const io = init.io;
-    var write_buf: [4096]u8 = undefined;
-    var read_buf: [4096]u8 = undefined;
+    var console_write_buf: [4096]u8 = undefined;
+    var console_read_buf: [4096]u8 = undefined;
 
     var console: stdio.Console = undefined;
-    console.init(io, &write_buf, &read_buf);
+    console.init(io, &console_write_buf, &console_read_buf);
 
     const args = try init.minimal.args.toSlice(allocator);
     defer allocator.free(args);
 
-    const parser = try args_parser.parse(allocator, args);
+    const parser = args_parser.parse(allocator, args) catch |err| switch (err) {
+        error.UnknownSubcommand, error.UnknownFlag => {
+            try console.printLine("Invalid usage: \n{s}", .{
+                help.HelpText(),
+            });
+            return;
+        },
+        error.OutOfMemory => {
+            try console.printLine("Out of memory", .{});
+            return;
+        }
+    };
 
     // TODO: i will an optional flags to set the path
     // For now operate on the current working directory. The opened `dir` handle IS
