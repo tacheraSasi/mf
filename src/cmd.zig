@@ -34,7 +34,6 @@ pub fn run(io: std.Io, allocator: std.mem.Allocator, argv: []const []const u8) !
     return trimmed;
 }
 
-
 /// Streams the child's stdout and stderr live to `writer`.
 /// Returns the exit status; does not capture the output.
 pub fn runStream(
@@ -43,10 +42,30 @@ pub fn runStream(
     argv: []const []const u8,
     writer: *std.Io.Writer,
 ) !void {
-    var child = try std.process.spawn(io, .{
-        .argv = argv,
-        .stdin = .ignore,
-        .stdout = .pipe,
-        .stderr = .pipe
-    });
+    var child = try std.process.spawn(io, .{ .argv = argv, .stdin = .ignore, .stdout = .pipe, .stderr = .pipe });
+
+    defer child.kill(io);
+
+    // git writes its progress to stderr, so stream that live.
+    // stdout we drain into a throwaway discarding writer (or i also stream it mmh).
+    var out_buf: [4096]u8 = undefined;
+    var err_buf: [4096]u8 = undefined;
+    var out_fr = child.stdout.?.reader(io, &out_buf);
+    var err_fr = child.stderr.?.reader(io, &err_buf);
+    const out_r = &out_fr.interface;
+    const err_r = &err_fr.interface;
+
+    _ = err_r.streamRemaining(writer) catch |err| switch (err) {
+        error.EndOfStream => {},
+        else => |e| return e,
+    };
+
+    //Draining stdout so the pipe does not fill and deadlock the child
+    _ = out_r.discardRemaining() catch {};
+
+    const term = try child.wait(io);
+    switch (term) {
+        .exited => |code| if (code != 0) return error.ExitCodeFailure,
+        else => return error.ExitCodeFailure,
+    }
 }
