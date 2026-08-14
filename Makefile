@@ -3,7 +3,9 @@
 
 # ── Variables ────────────────────────────────────────────────────────────────
 APP_NAME    := mf
-VERSION     := $(shell grep "VERSION" src/constants.zig | awk -F'"' '{print $$2}')
+# Extracted from `pub const VERSION = < value >;` in constants.zig (no quotes there,
+# so we can't split on '"'). Pull the token after `=` and strip whitespace/semicolon.
+VERSION     := $(shell sed -n 's/^pub const VERSION *= *\([^ ;]*\).*/\1/p' src/constants.zig)
 COMMIT      := $(shell git rev-parse --short HEAD 2>/dev/null || echo "dev")
 BUILD_DIR   := ./release-bins
 ZIG_FLAGS   :=
