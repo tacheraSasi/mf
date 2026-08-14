@@ -27,10 +27,9 @@ pub fn main(init: std.process.Init) !void {
             });
             return;
         },
-        else => {
-            try console.printLine("Something went wrong Failed to Parse Args \n{s}",.{
-                help.HelpText(),
-            });
+        error.OutOfMemory => {
+            try console.printLine("Out of memory", .{});
+            return;
         }
     };
 
