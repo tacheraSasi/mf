@@ -33,3 +33,20 @@ pub fn run(io: std.Io, allocator: std.mem.Allocator, argv: []const []const u8) !
     allocator.free(result.stdout);
     return trimmed;
 }
+
+
+/// Streams the child's stdout and stderr live to `writer`.
+/// Returns the exit status; does not capture the output.
+pub fn runStream(
+    io: std.Io,
+    allocator: std.mem.Allocator,
+    argv: []const []const u8,
+    writer: *std.Io.Writer,
+) !void {
+    var child = try std.process.spawn(io, .{
+        .argv = argv,
+        .stdin = .ignore,
+        .stdout = .pipe,
+        .stderr = .pipe
+    });
+}
