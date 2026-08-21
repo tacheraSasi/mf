@@ -29,7 +29,7 @@ pub const ArgsParser = struct {
         // Just the program name, nothing to parse here haha.
         if (args.len <= 1) {
             const empty = try allocator.dupe([]const u8, &.{});
-                return .{ .cli_flags = flags, .positional_args = empty };
+            return .{ .cli_flags = flags, .positional_args = empty };
         }
 
         var i: usize = 1;
