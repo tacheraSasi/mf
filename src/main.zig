@@ -30,7 +30,7 @@ pub fn main(init: std.process.Init) !void {
         error.OutOfMemory => {
             try console.printLine("Out of memory", .{});
             return;
-        }
+        },
     };
 
     // TODO: i will an optional flags to set the path
@@ -55,6 +55,9 @@ pub fn main(init: std.process.Init) !void {
                 return;
             }
             try core.Add(io, allocator, dir, positional_args[0], &console);
+        },
+        .clone => {
+            try core.Clone(&console);
         },
         .status => try core.Status(io, allocator, dir, &console),
         .rm => {

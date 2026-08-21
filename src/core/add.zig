@@ -1,5 +1,7 @@
 const std = @import("std");
+
 const stdio = @import("stdio");
+
 const cmd = @import("../cmd.zig");
 const scan = @import("scan.zig");
 
@@ -18,7 +20,6 @@ pub fn Add(io: std.Io, allocator: std.mem.Allocator, dir: std.Io.Dir, git_url: [
         },
         else => return err,
     };
-
 
     // after adding i just rescan the entire dir for now
     try scan.Scan(io, allocator, dir, console);
