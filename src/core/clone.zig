@@ -2,6 +2,7 @@ const std = @import("std");
 
 const stdio = @import("stdio");
 
+const git = @import("../git.zig");
 const manifest = @import("../manifest.zig");
 
 /// clones/replicates the entire dir cloning each repo/project as per manifest file
@@ -22,7 +23,7 @@ pub fn Clone(io: std.Io, allocator: std.mem.Allocator, dir: std.Io.Dir, console:
     }
 
     for (manifest_data.projects) |proj| {
-        try console.printLine("cloning {s}...", .{proj.dir});
+        try git.GitClone(io, allocator, ".", proj.git, console);
     }
 
     // read the each proj.git
