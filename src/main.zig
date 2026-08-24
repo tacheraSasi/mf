@@ -57,7 +57,7 @@ pub fn main(init: std.process.Init) !void {
             try core.Add(io, allocator, dir, positional_args[0], &console);
         },
         .clone => {
-            try core.Clone(&console);
+            try core.Clone(io, allocator, dir, &console);
         },
         .status => try core.Status(io, allocator, dir, &console),
         .rm => {
