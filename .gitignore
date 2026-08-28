@@ -4,3 +4,4 @@ zig-pkg/
 release-bins/
 *.o
 .DS_Store
+test/*
