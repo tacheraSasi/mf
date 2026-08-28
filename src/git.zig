@@ -21,20 +21,15 @@ pub fn GetGitUrl(io: std.Io, allocator: std.mem.Allocator, entry_name: []const u
 }
 
 /// performs a git clone in the process cwd
-pub fn GitClone(io: std.Io, allocator: std.mem.Allocator, entry_name: []const u8, git_url: []const u8, console: *stdio.Console) !void {
+pub fn GitClone(io: std.Io, allocator: std.mem.Allocator, entry_name: []const u8, project: manifest.Project, console: *stdio.Console) !void {
     // git runs from process cwd, which IS the scanned dir (opened on ".").
-    // So entry.name is a valid relative path for `git -C`.
-    // const argv = [_][]const u8{ "git", "-C", entry_name, "clone", git_url };
-    _ = git_url;
-    const argv = [_][]const u8{ "echo", " yeeeey", "git", "-C", entry_name, "remote", "get-url", "origin" };
-    try console.printLine("cloning {s}...", .{entry_name});
+    const argv = [_][]const u8{ "git", "-C", entry_name, "clone", "--progress", project.git, project.dir };
+    try console.printLine("cloning {s}...", .{project.git});
 
-    const result = cmd.runStream(io, allocator, &argv, console.writer) catch |err| switch (err) {
+    cmd.runStream(io, allocator, &argv, console.writer) catch |err| switch (err) {
         error.ExitCodeFailure => {
             return err;
         },
         else => return err,
     };
-    // defer allocator.free(result); // caller owns stdout (see cmd.zig)
-    return result;
 }
