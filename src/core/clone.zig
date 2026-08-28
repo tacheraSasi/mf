@@ -23,7 +23,7 @@ pub fn Clone(io: std.Io, allocator: std.mem.Allocator, dir: std.Io.Dir, console:
     }
 
     for (manifest_data.projects) |proj| {
-        try git.GitClone(io, allocator, ".", proj.git, console);
+        try git.GitClone(io, allocator, ".", proj, console);
     }
 
     // read the each proj.git
