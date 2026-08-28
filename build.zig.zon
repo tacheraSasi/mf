@@ -34,7 +34,7 @@
     .dependencies = .{
         .stdio = .{
             .url = "https://github.com/tacheraSasi/stdio-zig/archive/refs/heads/main.tar.gz",
-            .hash = "stdio-0.0.2-lL7pxawqAAAQZSGiPXxWVmhDXAJCA8huMQTe5yhRcY8V",
+            .hash = "stdio-0.0.2-lL7pxUw4AADgqDLMsO72wUZESOxlygxFPdkoYFxMITdO",
         },
     },
     .paths = .{
