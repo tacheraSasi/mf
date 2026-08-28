@@ -7,6 +7,7 @@ const cmd = @import("cmd.zig");
 const core = @import("core/core.zig");
 const help = @import("help.zig");
 const manifest = @import("manifest.zig");
+const SUBCOMMAND = @import("args.zig").Subcommand;
 
 pub fn main(init: std.process.Init) !void {
     const allocator = init.gpa;
@@ -22,7 +23,8 @@ pub fn main(init: std.process.Init) !void {
 
     const parser = args_parser.parse(allocator, args) catch |err| switch (err) {
         error.UnknownSubcommand, error.UnknownFlag => {
-            try console.printLine("Invalid usage: \n{s}", .{
+            try console.printLine("Invalid usage: {s} \n{s}", .{
+                @errorName(err),
                 help.HelpText(),
             });
             return;
@@ -30,7 +32,7 @@ pub fn main(init: std.process.Init) !void {
         error.OutOfMemory => {
             try console.printLine("Out of memory", .{});
             return;
-        }
+        },
     };
 
     // TODO: i will an optional flags to set the path
@@ -45,7 +47,9 @@ pub fn main(init: std.process.Init) !void {
     const positional_args = parser.positional_args;
     defer allocator.free(positional_args);
 
-    switch (cliFlags.subcommand) {
+    const parsed_subcommands: SUBCOMMAND = if (cliFlags.help) .none else cliFlags.subcommand;
+
+    switch (parsed_subcommands) {
         .scan => try core.Scan(io, allocator, dir, &console),
         .add => {
             if (positional_args.len == 0) {

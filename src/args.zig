@@ -10,6 +10,10 @@ pub const CliFlags = struct {
     /// --purge will remove the local dir with rm
     /// `mf rm <somedir> --purge`
     purge: bool = false,
+
+    /// for explicitly printing the help text
+    /// -h already print the help text since it will act an unknown subcommand
+    help: bool = false,
 };
 
 /// parses the cli arg
