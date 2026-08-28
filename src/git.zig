@@ -3,6 +3,7 @@ const std = @import("std");
 const stdio = @import("stdio");
 
 const cmd = @import("cmd.zig");
+const manifest = @import("manifest.zig");
 
 // returns the git url of a project dir or an error
 pub fn GetGitUrl(io: std.Io, allocator: std.mem.Allocator, entry_name: []const u8) ![]const u8 {
