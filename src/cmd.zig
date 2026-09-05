@@ -34,7 +34,7 @@ pub fn run(io: std.Io, allocator: std.mem.Allocator, argv: []const []const u8) !
     return trimmed;
 }
 
-/// Streams the child's stdout and stderr live to `writer`.
+/// Streams the child's stderr live to `writer`; stdout is drained and discarded.
 /// Returns the exit status; does not capture the output.
 pub fn runStream(
     io: std.Io,

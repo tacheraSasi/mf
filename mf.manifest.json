@@ -2,28 +2,13 @@
   "version": 1,
   "projects": [
     {
-      "dir": ".zig-cache",
+      "dir": "test/zig-out",
       "git": "https://github.com/tacheraSasi/mf.git"
     },
     {
-      "dir": "release-bins",
-      "git": "https://github.com/tacheraSasi/mf.git"
-    },
-    {
-      "dir": "zig-pkg",
-      "git": "https://github.com/tacheraSasi/mf.git"
-    },
-    {
-      "dir": "zig-out",
-      "git": "https://github.com/tacheraSasi/mf.git"
-    },
-    {
-      "dir": ".git",
-      "git": "https://github.com/tacheraSasi/mf.git"
-    },
-    {
-      "dir": "src",
+      "dir": "test/src",
       "git": "https://github.com/tacheraSasi/mf.git"
     }
   ]
 }
+

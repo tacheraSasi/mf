@@ -1,4 +1,5 @@
 const std = @import("std");
+
 pub const FILE_NAME = "mf.manifest.json";
 
 /// struct for the manifest json file structure
