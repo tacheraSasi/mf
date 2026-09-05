@@ -23,6 +23,16 @@ pub fn Clone(io: std.Io, allocator: std.mem.Allocator, dir: std.Io.Dir, console:
     }
 
     for (manifest_data.projects) |proj| {
+        // skip cloning if the project dir already exists on disk
+        const existing = dir.openDir(io, proj.dir, .{}) catch |err| switch (err) {
+            error.FileNotFound => null,
+            else => return err,
+        };
+        if (existing) |d| {
+            d.close(io);
+            try console.printLine("skipping {s}, already exists", .{proj.dir});
+            continue;
+        }
         try git.GitClone(io, allocator, ".", proj, console);
     }
 
