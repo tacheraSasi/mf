@@ -29,6 +29,7 @@ pub fn run(io: std.Io, allocator: std.mem.Allocator, argv: []const []const u8) !
     }
     if (end == result.stdout.len) return result.stdout; // nothing to trim here
 
+    errdefer allocator.free(result.stdout);
     const trimmed = try allocator.dupe(u8, result.stdout[0..end]);
     allocator.free(result.stdout);
     return trimmed;
