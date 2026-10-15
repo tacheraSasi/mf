@@ -82,7 +82,7 @@ pub const ArgsParser = struct {
         return .{ .cli_flags = flags, .positional_args = owned_positionals };
     }
 
-    pub fn Test(self: *const Self) void {
+    pub fn printDebug(self: *const Self) void {
         std.debug.print("subcommand: {s}\n", .{@tagName(self.cli_flags.subcommand)});
         std.debug.print("verbose: {}\n", .{self.cli_flags.verbose});
         for (self.positional_args) |arg| {
