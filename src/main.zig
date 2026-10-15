@@ -27,11 +27,11 @@ pub fn main(init: std.process.Init) !void {
                 @errorName(err),
                 help.HelpText(),
             });
-            return;
+            std.process.exit(2);
         },
         error.OutOfMemory => {
             try console.printLine("Out of memory", .{});
-            return;
+            std.process.exit(1);
         },
     };
 
@@ -56,7 +56,7 @@ pub fn main(init: std.process.Init) !void {
                 try console.printLine("Invalid usage: missing git url \n{s}", .{
                     help.HelpText(),
                 });
-                return;
+                std.process.exit(2);
             }
             try core.Add(io, allocator, dir, positional_args[0], &console);
         },
@@ -69,15 +69,28 @@ pub fn main(init: std.process.Init) !void {
                 try console.printLine("Invalid usage: missing project dir name \n{s}", .{
                     help.HelpText(),
                 });
-                return;
+                std.process.exit(2);
             }
-            try core.Rm(io, allocator, dir, positional_args[0], cliFlags.purge, &console);
+            // Error boundary (#38): Rm reports failures as errors, main maps
+            // them to a message + exit code. Anything unexpected propagates.
+            core.Rm(io, allocator, dir, positional_args[0], cliFlags.purge, &console) catch |err| switch (err) {
+                error.ProjectNotFound => {
+                    try console.printLine("The project {s} does not exist in the manifest file. Run mf scan to include it.", .{positional_args[0]});
+                    std.process.exit(1);
+                },
+                error.PurgeRefused => {
+                    try console.printLine("refusing to purge: {s} has uncommitted changes", .{positional_args[0]});
+                    std.process.exit(1);
+                },
+                else => return err,
+            };
         },
         .init => {
             try core.Init(io, dir, manifest.FILE_NAME, &console);
         },
         .nuke => {
             try console.printLine("not implemented", .{});
+            std.process.exit(1);
         },
         .none => try console.printLine(help.HelpText(), .{}),
     }
