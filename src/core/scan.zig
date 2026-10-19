@@ -77,16 +77,7 @@ pub fn Scan(io: std.Io, allocator: std.mem.Allocator, dir: std.Io.Dir, console: 
         .projects = projects.items,
     };
 
-    var buf: std.Io.Writer.Allocating = .init(allocator);
-    defer buf.deinit();
-
-    try buf.writer.print("{f}", .{std.json.fmt(manifestData, .{ .whitespace = .indent_2 })});
-    const json_data = buf.written();
-
-    try dir.writeFile(io, .{
-        .data = json_data,
-        .sub_path = sub_path,
-    });
+    try manifest.writeManifestFile(io, allocator, dir, manifestData);
 
     try console.print("Dooooneeeeeeeeeeeeeeee\n", .{});
 
