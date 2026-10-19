@@ -21,7 +21,10 @@ pub const Project = struct {
 /// internal arena (which is freed before this function returns) so the
 /// caller can free each piece via `allocator.free(...)`.
 pub fn parseManifestFile(io: std.Io, allocator: std.mem.Allocator, dir: std.Io.Dir) !Manifest {
-    const json_data = try dir.readFileAlloc(io, FILE_NAME, allocator, .unlimited);
+    const json_data = dir.readFileAlloc(io, FILE_NAME, allocator, .unlimited) catch |err| switch (err) {
+        error.FileNotFound => return error.ManifestNotFound,
+        else => return err,
+    };
     defer allocator.free(json_data);
 
     // Empty (or not-yet-written) manifest -> no projects. Return a static
@@ -30,7 +33,15 @@ pub fn parseManifestFile(io: std.Io, allocator: std.mem.Allocator, dir: std.Io.D
         return .{ .version = 0, .projects = &.{} };
     }
 
-    const parsed_data = try std.json.parseFromSlice(Manifest, allocator, json_data, .{});
+    // Ignore unknown fields so a manifest written by a newer mf version still
+    // loads; `version` can drive explicit migrations later.
+    const parsed_data = std.json.parseFromSlice(Manifest, allocator, json_data, .{
+        .ignore_unknown_fields = true,
+    }) catch |err| switch (err) {
+        error.OutOfMemory => return err,
+        error.SyntaxError, error.UnexpectedEndOfInput => return error.InvalidManifestSyntax,
+        else => return error.InvalidManifest,
+    };
     defer parsed_data.deinit();
 
     const src_projects = parsed_data.value.projects;
@@ -89,16 +100,7 @@ pub fn appendToManifestFile(io: std.Io, allocator: std.mem.Allocator, dir: std.I
         .projects = projects.items,
     };
 
-    var buf: std.Io.Writer.Allocating = .init(allocator);
-    defer buf.deinit();
-
-    try buf.writer.print("{f}", .{std.json.fmt(manifestData, .{ .whitespace = .indent_2 })});
-    const json_data = buf.written();
-
-    try dir.writeFile(io, .{
-        .data = json_data,
-        .sub_path = FILE_NAME,
-    });
+    try writeManifestFile(io, allocator, dir, manifestData);
     defer {
         for (projects.items) |p| {
             allocator.free(p.dir);
@@ -156,16 +158,7 @@ pub fn removeFromManifestFile(io: std.Io, allocator: std.mem.Allocator, dir: std
         .projects = projects.items,
     };
 
-    var buf: std.Io.Writer.Allocating = .init(allocator);
-    defer buf.deinit();
-
-    try buf.writer.print("{f}", .{std.json.fmt(manifest_data, .{ .whitespace = .indent_2 })});
-    const json_data = buf.written();
-
-    try dir.writeFile(io, .{
-        .data = json_data,
-        .sub_path = FILE_NAME,
-    });
+    try writeManifestFile(io, allocator, dir, manifest_data);
 }
 
 /// looks up a project by dir name. Returns null if not found.
@@ -184,6 +177,51 @@ pub fn getProjectFromManifest(io: std.Io, allocator: std.mem.Allocator, dir: std
             };
         }
     }
+    return null;
+}
+
+/// Serializes `data` and atomically replaces the manifest file.
+///
+/// The JSON is written to a temporary file which is then renamed over
+/// `mf.manifest.json`, so a crash mid-write cannot leave a truncated or
+/// corrupt manifest behind.
+pub fn writeManifestFile(io: std.Io, allocator: std.mem.Allocator, dir: std.Io.Dir, data: Manifest) !void {
+    var buf: std.Io.Writer.Allocating = .init(allocator);
+    defer buf.deinit();
+
+    try buf.writer.print("{f}", .{std.json.fmt(data, .{ .whitespace = .indent_2 })});
+
+    var atomic = try dir.createFileAtomic(io, FILE_NAME, .{ .replace = true });
+    defer atomic.deinit(io);
+
+    try atomic.file.writeStreamingAll(io, buf.written());
+    try atomic.file.sync(io);
+    try atomic.replace(io);
+}
+
+/// Returns where the most recent parse failure occurred, if it can be
+/// determined. Used by `main` to turn `error.InvalidManifest` into an
+/// actionable message with a line/column.
+pub fn manifestErrorLocation(io: std.Io, allocator: std.mem.Allocator, dir: std.Io.Dir) ?struct { line: u64, column: u64 } {
+    const json_data = dir.readFileAlloc(io, FILE_NAME, allocator, .unlimited) catch return null;
+    defer allocator.free(json_data);
+    if (json_data.len == 0) return null;
+
+    var scanner = std.json.Scanner.initCompleteInput(allocator, json_data);
+    defer scanner.deinit();
+
+    var diagnostics: std.json.Diagnostics = .{};
+    scanner.enableDiagnostics(&diagnostics);
+
+    const parsed = std.json.parseFromTokenSource(Manifest, allocator, &scanner, .{
+        .ignore_unknown_fields = true,
+    }) catch {
+        return .{
+            .line = diagnostics.getLine(),
+            .column = diagnostics.getColumn(),
+        };
+    };
+    parsed.deinit();
     return null;
 }
 
